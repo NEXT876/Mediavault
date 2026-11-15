@@ -24,14 +24,14 @@
     "semantic_hash": "851768921b92d4b91005b53b4c6272f7"
   },
   "mediavault/ai_meta.py": {
-    "mtime": 1794577024.455639,
-    "seen": 1794577048.5938988,
+    "mtime": 1794578358.2168865,
+    "seen": 1794772105.1532133,
     "ast_hash": "d8b95b4bc68be55344244626f8ab4193",
     "semantic_hash": ""
   },
   "mediavault/config.py": {
-    "mtime": 1794577012.504532,
-    "seen": 1794577048.593901,
+    "mtime": 1794578358.2168865,
+    "seen": 1794772105.1532164,
     "ast_hash": "4f8c6906129fe61c518bf4f38656e8e1",
     "semantic_hash": ""
   },
@@ -78,9 +78,9 @@
     "semantic_hash": ""
   },
   "mediavault/gui/main_window.py": {
-    "mtime": 1794557199.02566,
-    "seen": 1794577048.5939276,
-    "ast_hash": "c1cba8f4e5b72cca1eaec705bdf4b26e",
+    "mtime": 1794772048.2723496,
+    "seen": 1794772105.1532552,
+    "ast_hash": "0bc1949a330e455ea52ed96296146913",
     "semantic_hash": ""
   },
   "mediavault/gui/plugin_import.py": {
@@ -102,10 +102,10 @@
     "semantic_hash": "93dd1d5866024584e25f20c2d0047820"
   },
   "mediavault/gui/sidebar.py": {
-    "mtime": 1794557199.02566,
-    "seen": 1794577048.5939343,
-    "ast_hash": "1b33536652bf64b4e75c67c4f5752a13",
-    "semantic_hash": "1b33536652bf64b4e75c67c4f5752a13"
+    "mtime": 1794772053.2493374,
+    "seen": 1794772105.153265,
+    "ast_hash": "1ede897e6e694d544dfecb0826cc16b3",
+    "semantic_hash": ""
   },
   "mediavault/gui/stick_banner.py": {
     "mtime": 1794557199.02566,
@@ -120,9 +120,9 @@
     "semantic_hash": ""
   },
   "mediavault/gui/theme.py": {
-    "mtime": 1794557199.02566,
-    "seen": 1794577048.5939384,
-    "ast_hash": "6caa357b450c5a398cf4e740417b8ead",
+    "mtime": 1794772048.270574,
+    "seen": 1794772105.1532726,
+    "ast_hash": "18b678cc528a16c172a73cec91288244",
     "semantic_hash": ""
   },
   "mediavault/gui/thumbnails.py": {
@@ -186,8 +186,8 @@
     "semantic_hash": ""
   },
   "mediavault/volumes.py": {
-    "mtime": 1794577012.507006,
-    "seen": 1794577048.5939624,
+    "mtime": 1794578358.2172098,
+    "seen": 1794772105.1533146,
     "ast_hash": "ae3d48d3059559812283eb29e34c4ecb",
     "semantic_hash": ""
   },
@@ -198,8 +198,8 @@
     "semantic_hash": ""
   },
   "tests/test_ai_meta.py": {
-    "mtime": 1794577037.5996656,
-    "seen": 1794577048.5939658,
+    "mtime": 1794578358.2172098,
+    "seen": 1794772105.153319,
     "ast_hash": "5853e58894a0e35bbf2a01c3da956340",
     "semantic_hash": ""
   },
@@ -246,8 +246,8 @@
     "semantic_hash": ""
   },
   "tests/test_media_database.py": {
-    "mtime": 1794577037.5996656,
-    "seen": 1794577048.5939784,
+    "mtime": 1794578358.2172098,
+    "seen": 1794772105.1533387,
     "ast_hash": "31429441d272284af78677d604f6291d",
     "semantic_hash": ""
   },
@@ -330,15 +330,15 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1794557199.0118217,
-    "seen": 1794577048.5939991,
-    "ast_hash": "709314cc72685026dedd3b104b953a3f",
+    "mtime": 1794578447.1071398,
+    "seen": 1794772105.1533718,
+    "ast_hash": "7317d228b10e0fb6b69b5768dcab4935",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1794557199.0118217,
-    "seen": 1794577048.5940003,
-    "ast_hash": "e75e6a0573c5b63755854ad9f1a81cde",
+    "mtime": 1794772102.0923462,
+    "seen": 1794772105.1533737,
+    "ast_hash": "6e7f04bb60f9cf9c7d074117b206f33c",
     "semantic_hash": ""
   },
   "plugins/README.md": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   "mediavault/extras/wheel/configs.py": {
-    "mtime": 1794577012.5067854,
-    "seen": 1794577048.5939105,
+    "mtime": 1794578358.2172098,
+    "seen": 1794772105.153229,
     "ast_hash": "e83ee6ea0083fd1babaee98f4d38b8e7",
     "semantic_hash": ""
   },
@@ -384,8 +384,8 @@
     "semantic_hash": ""
   },
   "mediavault/database.py": {
-    "mtime": 1794577024.4551573,
-    "seen": 1794577048.593903,
+    "mtime": 1794578358.2172098,
+    "seen": 1794772105.1532185,
     "ast_hash": "82128cdca8673b6934aae84088cf0ba0",
     "semantic_hash": ""
   },
@@ -396,8 +396,8 @@
     "semantic_hash": ""
   },
   "mediavault/models/media.py": {
-    "mtime": 1794577024.4554443,
-    "seen": 1794577048.5939527,
+    "mtime": 1794578358.2172098,
+    "seen": 1794772105.1532984,
     "ast_hash": "dec50df361e792d0f59463a14d1a6eef",
     "semantic_hash": ""
   },
@@ -450,9 +450,15 @@
     "semantic_hash": ""
   },
   "mediavault/jsonio.py": {
-    "mtime": 1794577012.5037003,
-    "seen": 1794577048.5939457,
+    "mtime": 1794578358.2172098,
+    "seen": 1794772105.1532907,
     "ast_hash": "cbfcc3dfe8ee966c42eccf2d72bea23c",
+    "semantic_hash": ""
+  },
+  "tests/test_theme.py": {
+    "mtime": 1794772070.947763,
+    "seen": 1794772105.1533542,
+    "ast_hash": "fc021861df92d99d4de8d25518fbdcc7",
     "semantic_hash": ""
   }
 }

@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
         self.sidebar.set_plugins(
             [(key, plugin.name) for key, plugin in self.plugins.items()]
         )
-        self.sidebar.set_theme(self.theme.name == "dark")
+        self.sidebar.set_theme(self.theme.next_name)
 
         self._load_config(load_configs()[1])
         self._apply_config_ui()
@@ -560,9 +560,9 @@ class MainWindow(QMainWindow):
             self._activate_config(dlg.selected_config.db_path)
 
     def _toggle_theme(self) -> None:
-        """Switch between dark and light theme at runtime."""
+        """Switch to the next theme at runtime."""
         self.theme.toggle(QApplication.instance())
-        self.sidebar.set_theme(self.theme.name == "dark")
+        self.sidebar.set_theme(self.theme.next_name)
 
     # --- Import plugins ---
     def _start_plugin_import(self, key: str) -> None:
