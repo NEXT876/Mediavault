@@ -63,6 +63,7 @@ PALETTES: dict[str, dict[str, str]] = {
         "primary_fill": "#4f8cff",
         "primary_fill_hover": "#6ba0ff",
         "primary_fill_text": "#ffffff",
+        "glow": "",
     },
     "light": {
         "bg": "#f4f6fa",
@@ -93,6 +94,7 @@ PALETTES: dict[str, dict[str, str]] = {
         "primary_fill": "#2563eb",
         "primary_fill_hover": "#1d4ed8",
         "primary_fill_text": "#ffffff",
+        "glow": "",
     },
     # Dark glass with a cyan-violet-pink glow on accents.
     "neon": {
@@ -124,6 +126,8 @@ PALETTES: dict[str, dict[str, str]] = {
         "primary_fill": "#1a1528",
         "primary_fill_hover": "#251c3a",
         "primary_fill_text": "#ffffff",
+        # Card glow (#AARRGGBB, read by MediaCard); empty means no glow.
+        "glow": "#ffb57cff",
     },
 }
 
@@ -474,6 +478,8 @@ class ThemeManager(QObject):
         """
         if name in PALETTES:
             self._name = name
+        # Set before the stylesheet: its style change makes cards update their glow.
+        app.setProperty("glow", PALETTES[self._name]["glow"])
         app.setPalette(build_qpalette(self._name))
         app.setStyleSheet(build_stylesheet(self._name))
         self._settings.setValue(SETTINGS_KEY, self._name)

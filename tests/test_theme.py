@@ -42,3 +42,26 @@ def test_toggle_cycles_through_all_themes(app, tmp_path):
 
     assert seen == ["dark", "light", "neon", "dark"]
     assert settings.value("appearance/theme") == "dark"
+
+
+def test_neon_cards_glow_only_when_selected_or_hovered(app, tmp_path):
+    from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+
+    from mediavault.gui.widgets import MediaCard
+    from mediavault.models import MediaItem
+
+    settings = QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat)
+    manager = ThemeManager(settings)
+    manager.apply(app, "neon")
+    card = MediaCard(MediaItem("A"), None)
+
+    assert card.graphicsEffect() is None
+    card.set_selected(True)
+    assert isinstance(card.graphicsEffect(), QGraphicsDropShadowEffect)
+    card.set_selected(False)
+    assert card.graphicsEffect() is None
+    card._update_glow(hovered=True)
+    assert card.graphicsEffect() is not None
+
+    manager.apply(app, "dark")  # style change: no glow outside neon
+    assert card.graphicsEffect() is None
