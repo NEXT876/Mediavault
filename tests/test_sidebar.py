@@ -113,3 +113,10 @@ def test_set_plugins_keeps_section_hidden_in_ai_mode(sidebar):
     sidebar.set_mode(ai=True, has_folder=False)
     sidebar.set_plugins([("a", "A")])
     assert sidebar._online_section.isHidden()
+
+
+def test_theme_button_shows_the_active_theme(sidebar):
+    sidebar.set_theme("neon", "dark")
+
+    assert "Neon-Theme" in sidebar._btn_theme.text()
+    assert "Dunkles Theme" in sidebar._btn_theme.toolTip()

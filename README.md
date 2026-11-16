@@ -85,8 +85,8 @@ grid into a shortlist.
 ## Themes
 
 MediaVault ships three themes. The theme button at the bottom of the sidebar
-switches to the next one (dark → light → neon → dark) and is labelled with the
-theme it switches to. The choice is remembered across restarts.
+shows the active theme and switches to the next one on click
+(dark → light → neon → dark). The choice is remembered across restarts.
 
 ### Dark (default)
 

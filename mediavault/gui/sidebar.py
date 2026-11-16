@@ -265,8 +265,7 @@ class Sidebar(QWidget):
         )
         self._btn_downloads.setVisible(has_jobs)
 
-    def set_theme(self, next_name: str) -> None:
-        """Label the theme toggle with the theme it switches to."""
-        label = THEME_LABELS[next_name]
-        self._btn_theme.setText(f"{_THEME_ICONS[next_name]}  {label}")
-        self._btn_theme.setToolTip(f"Zu {label} wechseln")
+    def set_theme(self, name: str, next_name: str) -> None:
+        """Label the theme toggle with the active theme; the tooltip names the next."""
+        self._btn_theme.setText(f"{_THEME_ICONS[name]}  {THEME_LABELS[name]}")
+        self._btn_theme.setToolTip(f"Klicken für {THEME_LABELS[next_name]}")

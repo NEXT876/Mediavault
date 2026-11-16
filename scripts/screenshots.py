@@ -144,7 +144,7 @@ def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
     for name in ("dark", "light", "neon"):
         theme.apply(app, name)
-        window.sidebar.set_theme(theme.next_name)
+        window.sidebar.set_theme(theme.name, theme.next_name)
         window.grid.clear_selection()
         if name == "neon":
             # Show the glow: two selected cards and one under the mouse.
@@ -156,7 +156,7 @@ def main() -> None:
 
     window.grid.clear_selection()
     theme.apply(app, "dark")
-    window.sidebar.set_theme(theme.next_name)
+    window.sidebar.set_theme(theme.name, theme.next_name)
     window._show_page(WHEEL)
     settle(app)
     window.grab().save(os.path.join(OUT_DIR, "wheel.png"))
