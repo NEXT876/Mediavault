@@ -79,7 +79,7 @@ grid into a shortlist.
   offers a prompt analysis
 
 **Comfortable**
-- Dark and light theme, switchable at runtime and remembered across restarts
+- Dark, light and neon theme, switchable at runtime and remembered across restarts
 
 ![The prize wheel](docs/screenshots/wheel.png)
 
@@ -212,7 +212,7 @@ mediavault/
     ├── stick_dialog.py # bind a config to a folder on a stick
     ├── dialogs.py      # detail, edit, random and config dialogs
     ├── file_dialogs.py # native file pickers, opening files
-    └── theme.py        # dark/light palettes and QSS
+    └── theme.py        # dark/light/neon palettes and QSS
 tests/
 plugins/                # import plugins; private/ is not committed
 ```

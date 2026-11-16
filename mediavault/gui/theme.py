@@ -1,4 +1,4 @@
-"""Central dark and light themes for the whole user interface.
+"""Central dark, light and neon themes for the whole user interface.
 
 A theme is a color palette (:data:`PALETTES`) that fills one shared Qt
 stylesheet template, plus a matching ``QPalette`` for native dialogs and
@@ -25,6 +25,14 @@ SETTINGS_KEY = "appearance/theme"
 # Segoe UI on Windows; Linux distros use the first family they have installed.
 FONT_FAMILIES = ("Segoe UI", "Noto Sans", "Ubuntu", "Cantarell", "DejaVu Sans")
 
+# QSS-only brush; keys used with QColor (wheel, QPalette, splash) stay plain colors.
+_NEON_GRADIENT = (
+    "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %s, stop:0.5 %s, stop:1 %s)"
+)
+
+# Names in the order the sidebar button cycles through them, with their labels.
+THEME_LABELS = {"dark": "Dunkles Theme", "light": "Helles Theme", "neon": "Neon-Theme"}
+
 PALETTES: dict[str, dict[str, str]] = {
     "dark": {
         "bg": "#1f2228",
@@ -50,6 +58,12 @@ PALETTES: dict[str, dict[str, str]] = {
         "score_mid": "#c08a2e",
         "score_low": "#c2703a",
         "score_bad": "#d9534f",
+        "accent": "#4f8cff",
+        "accent_hover": "#6ba0ff",
+        "primary_fill": "#4f8cff",
+        "primary_fill_hover": "#6ba0ff",
+        "primary_fill_text": "#ffffff",
+        "glow": "",
     },
     "light": {
         "bg": "#f4f6fa",
@@ -75,6 +89,45 @@ PALETTES: dict[str, dict[str, str]] = {
         "score_mid": "#b45309",
         "score_low": "#c2410c",
         "score_bad": "#d92d20",
+        "accent": "#2563eb",
+        "accent_hover": "#1d4ed8",
+        "primary_fill": "#2563eb",
+        "primary_fill_hover": "#1d4ed8",
+        "primary_fill_text": "#ffffff",
+        "glow": "",
+    },
+    # Dark glass with a cyan-violet-pink glow on accents.
+    "neon": {
+        "bg": "#0b0b12",
+        "surface": "#14141d",
+        "surface_alt": "#1a1a26",
+        "hover": "#232334",
+        "input_bg": "#101018",
+        "border": "#26263a",
+        "border_strong": "#3a3757",
+        "text": "#ecebf5",
+        "text_muted": "#8b8aa3",
+        "primary": "#c084fc",
+        "primary_hover": "#e879f9",
+        "primary_text": "#0b0b12",
+        "danger": "#f43f5e",
+        "danger_hover": "#fb7185",
+        "selection_bg": "#1d1730",
+        "selection_fill": "rgba(192, 132, 252, 50)",
+        "nav_active_bg": "#221a37",
+        "scrollbar": "#2c2a44",
+        "scrollbar_hover": "#48436e",
+        "score_high": "#14b8a6",
+        "score_mid": "#8b5cf6",
+        "score_low": "#db2777",
+        "score_bad": "#e11d48",
+        "accent": _NEON_GRADIENT % ("#67e8f9", "#a78bfa", "#f472b6"),
+        "accent_hover": _NEON_GRADIENT % ("#a5f3fc", "#c4b5fd", "#f9a8d4"),
+        "primary_fill": "#1a1528",
+        "primary_fill_hover": "#251c3a",
+        "primary_fill_text": "#ffffff",
+        # Card glow (#AARRGGBB, read by MediaCard); empty means no glow.
+        "glow": "#ffb57cff",
     },
 }
 
@@ -136,14 +189,14 @@ QPushButton:disabled {
 }
 
 QPushButton[variant="primary"] {
-    background-color: $primary;
-    color: $primary_text;
-    border: 1px solid $primary;
+    background-color: $primary_fill;
+    color: $primary_fill_text;
+    border: 1px solid $accent;
     font-weight: 700;
 }
 QPushButton[variant="primary"]:hover {
-    background-color: $primary_hover;
-    border-color: $primary_hover;
+    background-color: $primary_fill_hover;
+    border-color: $accent_hover;
 }
 QPushButton[variant="primary"]:disabled {
     background-color: $surface_alt;
@@ -195,7 +248,7 @@ QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
     selection-color: $primary_text;
 }
 QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QComboBox:focus {
-    border-color: $primary;
+    border-color: $accent;
 }
 QComboBox { padding-right: 24px; }
 QComboBox QAbstractItemView {
@@ -218,7 +271,7 @@ QCheckBox::indicator {
 }
 QCheckBox::indicator:hover { border-color: $primary; }
 QCheckBox::indicator:checked {
-    background-color: $primary;
+    background-color: $accent;
     border-color: $primary;
 }
 
@@ -255,7 +308,7 @@ QFrame#MediaCard:hover {
 }
 QFrame#MediaCard[selected="true"] {
     background-color: $selection_bg;
-    border-color: $primary;
+    border-color: $accent;
 }
 
 QLabel#CardImage {
@@ -265,7 +318,7 @@ QLabel#CardImage {
 }
 QLabel#CardTitle { background: transparent; font-weight: 700; }
 QLabel#SelectionBadge {
-    background-color: $primary;
+    background-color: $accent;
     color: $primary_text;
     border-radius: 11px;
     font-weight: 700;
@@ -299,7 +352,7 @@ QProgressBar {
     border: none;
     border-radius: 3px;
 }
-QProgressBar::chunk { background-color: $primary; border-radius: 3px; }
+QProgressBar::chunk { background-color: $accent; border-radius: 3px; }
 
 QFrame#WheelPanel {
     background-color: $surface;
@@ -402,7 +455,7 @@ class ThemeManager(QObject):
 
     @property
     def name(self) -> str:
-        """Name of the active theme ("dark" or "light")."""
+        """Name of the active theme ("dark", "light" or "neon")."""
         return self._name
 
     def palette(self) -> dict[str, str]:
@@ -425,6 +478,8 @@ class ThemeManager(QObject):
         """
         if name in PALETTES:
             self._name = name
+        # Set before the stylesheet: its style change makes cards update their glow.
+        app.setProperty("glow", PALETTES[self._name]["glow"])
         app.setPalette(build_qpalette(self._name))
         app.setStyleSheet(build_stylesheet(self._name))
         self._settings.setValue(SETTINGS_KEY, self._name)
@@ -433,6 +488,12 @@ class ThemeManager(QObject):
         self.theme_changed.emit(self._name)
         return self._name
 
+    @property
+    def next_name(self) -> str:
+        """Name of the theme :meth:`toggle` switches to."""
+        names = list(THEME_LABELS)
+        return names[(names.index(self._name) + 1) % len(names)]
+
     def toggle(self, app: QApplication) -> str:
-        """Switch between dark and light and return the new theme name."""
-        return self.apply(app, "light" if self._name == "dark" else "dark")
+        """Switch to the next theme (dark → light → neon) and return its name."""
+        return self.apply(app, self.next_name)
