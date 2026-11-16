@@ -79,9 +79,24 @@ grid into a shortlist.
   offers a prompt analysis
 
 **Comfortable**
-- Dark, light and neon theme, switchable at runtime and remembered across restarts
+- Three themes (dark, light, neon), switchable at runtime and remembered
+  across restarts (see [Themes](#themes))
 
 ![The prize wheel](docs/screenshots/wheel.png)
+
+## Themes
+
+MediaVault ships three themes. The theme button at the bottom of the sidebar
+switches to the next one (dark → light → neon → dark) and is labelled with the
+theme it switches to. The choice is remembered across restarts.
+
+| Theme | Look |
+| --- | --- |
+| **Dark** (default) | Graphite surfaces with blue accents, easy on the eyes in the evening. See the screenshot at the top. |
+| **Light** | White and light-gray surfaces with blue accents, for bright rooms. See the screenshot under [Who it is for](#who-it-is-for). |
+| **Neon** | Near-black glass surfaces with violet accents. Primary buttons, selected cards and focused inputs get a cyan-violet-pink gradient border, and the hovered and selected cards glow. |
+
+![The library in the neon theme: two selected cards and the hovered card glow](docs/screenshots/library_neon.png)
 
 ## Installation
 
