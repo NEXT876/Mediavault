@@ -78,8 +78,8 @@
     "semantic_hash": ""
   },
   "mediavault/gui/main_window.py": {
-    "mtime": 1794772048.2723496,
-    "seen": 1794772105.1532552,
+    "mtime": 1794816346.1194599,
+    "seen": 1794816907.4831448,
     "ast_hash": "0bc1949a330e455ea52ed96296146913",
     "semantic_hash": ""
   },
@@ -102,8 +102,8 @@
     "semantic_hash": "93dd1d5866024584e25f20c2d0047820"
   },
   "mediavault/gui/sidebar.py": {
-    "mtime": 1794772053.2493374,
-    "seen": 1794772105.153265,
+    "mtime": 1794816346.1197355,
+    "seen": 1794816907.4831533,
     "ast_hash": "1ede897e6e694d544dfecb0826cc16b3",
     "semantic_hash": ""
   },
@@ -120,8 +120,8 @@
     "semantic_hash": ""
   },
   "mediavault/gui/theme.py": {
-    "mtime": 1794816144.7670794,
-    "seen": 1794816160.3537288,
+    "mtime": 1794816346.119909,
+    "seen": 1794816907.4831598,
     "ast_hash": "5cd8a00acc96dfc612945c098389c6dd",
     "semantic_hash": ""
   },
@@ -132,8 +132,8 @@
     "semantic_hash": ""
   },
   "mediavault/gui/widgets.py": {
-    "mtime": 1794816144.7696464,
-    "seen": 1794816160.3537338,
+    "mtime": 1794816346.1200683,
+    "seen": 1794816907.483165,
     "ast_hash": "04217e73c1ea1f139487368e57f73cb2",
     "semantic_hash": ""
   },
@@ -336,9 +336,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1794772102.0923462,
-    "seen": 1794772105.1533737,
-    "ast_hash": "6e7f04bb60f9cf9c7d074117b206f33c",
+    "mtime": 1794816901.0104465,
+    "seen": 1794816907.483252,
+    "ast_hash": "cb1ef9040172d6b20a2e9f579aedc385",
     "semantic_hash": ""
   },
   "plugins/README.md": {
@@ -432,21 +432,21 @@
     "semantic_hash": ""
   },
   "docs/screenshots/library_dark.png": {
-    "mtime": 1794557199.0122654,
-    "seen": 1794577048.5940032,
-    "ast_hash": "a73c6913173456b8a5cc19ac6bb3db4d",
+    "mtime": 1794816886.487852,
+    "seen": 1794816907.4832556,
+    "ast_hash": "5be55e3fdfee2f1b661f744d5d2df20f",
     "semantic_hash": ""
   },
   "docs/screenshots/library_light.png": {
-    "mtime": 1794557199.0122654,
-    "seen": 1794577048.594005,
-    "ast_hash": "37acfc4ab86740b4cacbddf1ad8f5b7a",
+    "mtime": 1794816887.5038521,
+    "seen": 1794816907.4832573,
+    "ast_hash": "f0c3d6fa607e5b21d556711a34b87cf8",
     "semantic_hash": ""
   },
   "docs/screenshots/wheel.png": {
-    "mtime": 1794557199.0122654,
-    "seen": 1794577048.594006,
-    "ast_hash": "eb30effe88bfb316b1bf121d2d33a9fd",
+    "mtime": 1794816889.563852,
+    "seen": 1794816907.4832613,
+    "ast_hash": "92209aedeab451d47332c1cb0deddb50",
     "semantic_hash": ""
   },
   "mediavault/jsonio.py": {
@@ -456,9 +456,21 @@
     "semantic_hash": ""
   },
   "tests/test_theme.py": {
-    "mtime": 1794816134.0518072,
-    "seen": 1794816160.3537974,
+    "mtime": 1794816346.1201916,
+    "seen": 1794816907.4832337,
     "ast_hash": "ad44e805a3f562ecfba2b7ac9f4cda79",
+    "semantic_hash": ""
+  },
+  "scripts/screenshots.py": {
+    "mtime": 1794816883.618129,
+    "seen": 1794816907.4831996,
+    "ast_hash": "a51fd8182256d4299c4d709f589f0d5b",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/library_neon.png": {
+    "mtime": 1794816888.531852,
+    "seen": 1794816907.4832592,
+    "ast_hash": "49452cdb90ec459056a88174aa1eecec",
     "semantic_hash": ""
   }
 }

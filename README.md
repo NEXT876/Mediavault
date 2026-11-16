@@ -42,8 +42,6 @@ index it, and rate as you go. Groups keep shoots or subjects apart, batch
 actions rate or regroup many photos at once, and sorting by score turns the
 grid into a shortlist.
 
-![The same library in the light theme](docs/screenshots/library_light.png)
-
 ## Features
 
 **Organize**
@@ -90,11 +88,23 @@ MediaVault ships three themes. The theme button at the bottom of the sidebar
 switches to the next one (dark → light → neon → dark) and is labelled with the
 theme it switches to. The choice is remembered across restarts.
 
-| Theme | Look |
-| --- | --- |
-| **Dark** (default) | Graphite surfaces with blue accents, easy on the eyes in the evening. See the screenshot at the top. |
-| **Light** | White and light-gray surfaces with blue accents, for bright rooms. See the screenshot under [Who it is for](#who-it-is-for). |
-| **Neon** | Near-black glass surfaces with violet accents. Primary buttons, selected cards and focused inputs get a cyan-violet-pink gradient border, and the hovered and selected cards glow. |
+### Dark (default)
+
+Graphite surfaces with blue accents, easy on the eyes in the evening.
+
+![The library in the dark theme](docs/screenshots/library_dark.png)
+
+### Light
+
+White and light-gray surfaces with blue accents, for bright rooms.
+
+![The library in the light theme](docs/screenshots/library_light.png)
+
+### Neon
+
+Near-black glass surfaces with violet accents. Primary buttons, selected cards
+and focused inputs get a cyan-violet-pink gradient border, and the hovered and
+selected cards glow.
 
 ![The library in the neon theme: two selected cards and the hovered card glow](docs/screenshots/library_neon.png)
 
@@ -229,6 +239,8 @@ mediavault/
     ├── file_dialogs.py # native file pickers, opening files
     └── theme.py        # dark/light/neon palettes and QSS
 tests/
+scripts/
+└── screenshots.py      # regenerate the README screenshots (run by hand)
 plugins/                # import plugins; private/ is not committed
 ```
 
