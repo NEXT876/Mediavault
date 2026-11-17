@@ -120,6 +120,14 @@ release, install from source as described below.
 
 Requires Python 3.10 or newer.
 
+The quickest way is the start script in the repository folder: `start.bat` on
+Windows (double-click) or `./start.sh` on Linux. The first run creates a
+virtual environment in `.venv` and installs MediaVault into it; later runs
+start the app right away. After an update that changes the dependencies,
+delete `.venv` once so the script installs them again.
+
+To set it up by hand instead:
+
 ```bash
 git clone https://github.com/NEXT876/Mediavault.git
 ```
@@ -242,6 +250,7 @@ tests/
 scripts/
 └── screenshots.py      # regenerate the README screenshots (run by hand)
 plugins/                # import plugins; private/ is not committed
+start.bat, start.sh     # start scripts for Windows and Linux
 ```
 
 ## Contributing
