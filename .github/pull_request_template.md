@@ -27,6 +27,5 @@ GitHub squashes on merge (the PR title becomes the commit message) and deletes t
 
 - [ ] `pytest`
 - [ ] `ruff check .`
-- [ ] `graphify update .` run and `graphify-out/` committed (code changes)
 
 Co-Authored-By: Claude <noreply@anthropic.com>

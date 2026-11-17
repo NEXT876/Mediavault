@@ -12,8 +12,11 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
 
 from mediavault.gui.collapsible import CollapsibleSection
+from mediavault.gui.theme import THEME_LABELS
 from mediavault.gui.widgets import button, hint_label
 from mediavault.models import MediaType
+
+_THEME_ICONS = {"dark": "🌙", "light": "☀️", "neon": "✨"}
 
 # Pages besides the library views; MediaType values name the library views.
 DOWNLOADS = "downloads"
@@ -61,7 +64,7 @@ class Sidebar(QWidget):
         plugin_requested(str): Open the import of the plugin with this key.
         wheel_requested: Show the wheel of fortune.
         config_requested: Open the config switcher.
-        theme_requested: Toggle dark/light theme.
+        theme_requested: Switch to the next theme.
         new_requested: Create a new entry.
     """
 
@@ -262,9 +265,7 @@ class Sidebar(QWidget):
         )
         self._btn_downloads.setVisible(has_jobs)
 
-    def set_theme(self, dark: bool) -> None:
-        """Label the theme toggle with the theme it switches to."""
-        self._btn_theme.setText("☀️  Helles Theme" if dark else "🌙  Dunkles Theme")
-        self._btn_theme.setToolTip(
-            "Zu hellem Theme wechseln" if dark else "Zu dunklem Theme wechseln"
-        )
+    def set_theme(self, name: str, next_name: str) -> None:
+        """Label the theme toggle with the active theme; the tooltip names the next."""
+        self._btn_theme.setText(f"{_THEME_ICONS[name]}  {THEME_LABELS[name]}")
+        self._btn_theme.setToolTip(f"Klicken für {THEME_LABELS[next_name]}")

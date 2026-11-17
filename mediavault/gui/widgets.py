@@ -9,11 +9,12 @@ grid.
 
 from collections.abc import Callable
 
-from PyQt6.QtCore import QPointF, QRectF, Qt, pyqtSignal
-from PyQt6.QtGui import QMouseEvent, QPainter, QPainterPath, QPixmap
+from PyQt6.QtCore import QEvent, QPointF, QRectF, Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QMouseEvent, QPainter, QPainterPath, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QFrame,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -229,6 +230,42 @@ class MediaCard(QFrame):
         self.setProperty("selected", "true" if selected else "false")
         self.selection_badge.setVisible(selected)
         repolish(self)
+        self._update_glow()
+
+    def _update_glow(self, hovered: bool | None = None) -> None:
+        """Let the card glow in themes with a glow color, when hovered or selected.
+
+        Only these few cards get the effect, because every effect renders its
+        widget into an extra image on each repaint.
+        """
+        color = QApplication.instance().property("glow")
+        hovered = self.underMouse() if hovered is None else hovered
+        if not color or not (self._selected or hovered):
+            self.setGraphicsEffect(None)
+            return
+        effect = self.graphicsEffect()
+        if not isinstance(effect, QGraphicsDropShadowEffect):
+            effect = QGraphicsDropShadowEffect(self)
+            effect.setOffset(0, 0)
+            effect.setBlurRadius(40)
+            self.setGraphicsEffect(effect)
+        effect.setColor(QColor(color))
+
+    def enterEvent(self, event: QEvent) -> None:
+        """Start the hover glow."""
+        self._update_glow(hovered=True)
+        super().enterEvent(event)
+
+    def leaveEvent(self, event: QEvent) -> None:
+        """End the hover glow unless the card is selected."""
+        self._update_glow(hovered=False)
+        super().leaveEvent(event)
+
+    def changeEvent(self, event: QEvent) -> None:
+        """Follow theme switches, which arrive as style changes."""
+        if event.type() == QEvent.Type.StyleChange:
+            self._update_glow()
+        super().changeEvent(event)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """Remember the press position and report it before the selection changes."""

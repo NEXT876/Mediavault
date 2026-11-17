@@ -4,9 +4,9 @@
 
 **A place to collect the images that matter to you, rate them, and keep rediscovering them.**
 
-[![CI](https://github.com/NEXT876/MediaVault/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/NEXT876/MediaVault/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/NEXT876/MediaVault/badges/coverage.json)](https://github.com/NEXT876/MediaVault/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/NEXT876/MediaVault?include_prereleases&sort=semver)](https://github.com/NEXT876/MediaVault/releases)
+[![CI](https://github.com/NEXT876/Mediavault/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/NEXT876/Mediavault/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/NEXT876/Mediavault/badges/coverage.json)](https://github.com/NEXT876/Mediavault/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/NEXT876/Mediavault?include_prereleases&sort=semver)](https://github.com/NEXT876/Mediavault/releases)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -41,8 +41,6 @@ the shoot's folder (local, on a USB stick, or on a cloud drive), let MediaVault
 index it, and rate as you go. Groups keep shoots or subjects apart, batch
 actions rate or regroup many photos at once, and sorting by score turns the
 grid into a shortlist.
-
-![The same library in the light theme](docs/screenshots/library_light.png)
 
 ## Features
 
@@ -79,24 +77,59 @@ grid into a shortlist.
   offers a prompt analysis
 
 **Comfortable**
-- Dark and light theme, switchable at runtime and remembered across restarts
+- Three themes (dark, light, neon), switchable at runtime and remembered
+  across restarts (see [Themes](#themes))
 
 ![The prize wheel](docs/screenshots/wheel.png)
+
+## Themes
+
+MediaVault ships three themes. The theme button at the bottom of the sidebar
+shows the active theme and switches to the next one on click
+(dark → light → neon → dark). The choice is remembered across restarts.
+
+### Dark (default)
+
+Graphite surfaces with blue accents, easy on the eyes in the evening.
+
+![The library in the dark theme](docs/screenshots/library_dark.png)
+
+### Light
+
+White and light-gray surfaces with blue accents, for bright rooms.
+
+![The library in the light theme](docs/screenshots/library_light.png)
+
+### Neon
+
+Near-black glass surfaces with violet accents. Primary buttons, selected cards
+and focused inputs get a cyan-violet-pink gradient border, and the hovered and
+selected cards glow.
+
+![The library in the neon theme: two selected cards and the hovered card glow](docs/screenshots/library_neon.png)
 
 ## Installation
 
 ### Windows
 
 A standalone `.exe` that needs no Python will be attached to the
-[releases](https://github.com/NEXT876/MediaVault/releases). Until the first
+[releases](https://github.com/NEXT876/Mediavault/releases). Until the first
 release, install from source as described below.
 
 ### From source
 
 Requires Python 3.10 or newer.
 
+The quickest way is the start script in the repository folder: `start.bat` on
+Windows (double-click) or `./start.sh` on Linux. The first run creates a
+virtual environment in `.venv` and installs MediaVault into it; later runs
+start the app right away. After an update that changes the dependencies,
+delete `.venv` once so the script installs them again.
+
+To set it up by hand instead:
+
 ```bash
-git clone https://github.com/NEXT876/MediaVault.git
+git clone https://github.com/NEXT876/Mediavault.git
 ```
 
 ```bash
@@ -110,6 +143,9 @@ pip install -e .
 ```bash
 python -m mediavault
 ```
+
+`requirements.txt` lists the same runtime dependencies for tools that expect
+one (`pip install -r requirements.txt`).
 
 Plugins are loaded from the `plugins/` folder next to the package, so start
 the app from the repository folder.
@@ -212,9 +248,12 @@ mediavault/
     ├── stick_dialog.py # bind a config to a folder on a stick
     ├── dialogs.py      # detail, edit, random and config dialogs
     ├── file_dialogs.py # native file pickers, opening files
-    └── theme.py        # dark/light palettes and QSS
+    └── theme.py        # dark/light/neon palettes and QSS
 tests/
+scripts/
+└── screenshots.py      # regenerate the README screenshots (run by hand)
 plugins/                # import plugins; private/ is not committed
+start.bat, start.sh     # start scripts for Windows and Linux
 ```
 
 ## Contributing

@@ -43,14 +43,15 @@
 ## Codegraph mit graphify (gilt immer)
 
 - `graphify-out/` enthält einen Wissensgraphen des Codes (`GRAPH_REPORT.md`,
-  `graph.json`, `graph.html`) und wird mit committet.
-- **Vor** Arbeit am Code zuerst den Graphen nutzen, statt das Repo neu zu
-  durchsuchen: `graphify-out/GRAPH_REPORT.md` lesen und gezielt
+  `graph.json`, `graph.html`). Er ist nur lokal: steht in `.gitignore`, wird
+  nie committet oder gepusht.
+- **Vor** jeder Antwort, die das Suchen in mehreren Dateien braucht, zuerst
+  `graphify update .` ausführen (baut den Graphen neu oder aktualisiert ihn;
+  in einer frischen Session fehlt er) und dann den Graphen nutzen, statt das
+  Repo neu zu durchsuchen: `graphify-out/GRAPH_REPORT.md` lesen und gezielt
   `graphify query "<Frage>"`, `graphify explain "<Symbol>"`,
   `graphify affected "<Symbol>"` (wen eine Änderung trifft) oder
   `graphify path "A" "B"` aufrufen.
-- **Nach** jeder fertig umgesetzten Änderung `graphify update .` ausführen und
-  `graphify-out/` im selben Branch mit committen und pushen.
 - Fehlt das Tool: `pip install graphifyy`. Nur `--code-only` bzw. `update`
   nutzen (lokal, ohne LLM); keinen Code an externe LLM-Backends schicken.
 
@@ -59,15 +60,18 @@
 - Sprache: Antworten auf Deutsch. GitHub-Issues und PRs (Titel und Text) auf Englisch.
 - Tech-Debt-Backlog (Audit 2026-11-10), nach Priorität:
   1. CI-Matrix (Python 3.10/3.13, Windows)
-  2. Atomares JSON-Speichern 4× dupliziert, ohne fsync (Datenverlust-Risiko auf Stick/rclone)
-  3. Obergrenzen für PyQt6/opencv
-  4. GUI-Riesendateien (dialogs.py, wheel.py, main_window.py)
-  5. GUI-Tests fehlen
-  6. MediaDatabase schreibt bei jeder Änderung alles neu (erst bei großen Bibliotheken relevant)
+  2. Obergrenzen für PyQt6/opencv
+  3. GUI-Riesendateien (dialogs.py, wheel.py, main_window.py)
+  4. GUI-Tests fehlen
+  5. MediaDatabase schreibt bei jeder Änderung alles neu (erst bei großen Bibliotheken relevant)
 - Offene Feature-Ideen: Duell-Modus (Elo), fehlende Dateien finden, Diashow mit
   Schnellbewertung, Backups von media_data.json, Tags statt Gruppen.
 - Specs und Pläne (`docs/superpowers/specs/`, `docs/superpowers/plans/`) löschen,
   sobald sie fertig umgesetzt sind, im selben Branch wie die Umsetzung.
+- Branch-Namen immer nach der Git-Workflow-Regel oben (`fix/…`, `feature/…` …),
+  auch in Cloud-Sessions, die einen `claude/…`-Branch vorgeben.
+- Das Repo heißt auf GitHub `NEXT876/Mediavault` (kleines v), Remote:
+  `https://github.com/NEXT876/Mediavault.git`.
 - Neue Notizen hier eintragen, wenn Ben sagt „merk dir …".
 - Modelle und Subagents: Planung, Architektur und Reviews selbst machen (Opus).
   Routinearbeit nach einem fertigen Plan nur dann an Subagents mit
