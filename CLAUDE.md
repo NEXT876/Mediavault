@@ -43,14 +43,15 @@
 ## Codegraph mit graphify (gilt immer)
 
 - `graphify-out/` enthält einen Wissensgraphen des Codes (`GRAPH_REPORT.md`,
-  `graph.json`, `graph.html`) und wird mit committet.
-- **Vor** Arbeit am Code zuerst den Graphen nutzen, statt das Repo neu zu
-  durchsuchen: `graphify-out/GRAPH_REPORT.md` lesen und gezielt
+  `graph.json`, `graph.html`). Er ist nur lokal: steht in `.gitignore`, wird
+  nie committet oder gepusht.
+- **Vor** jeder Antwort, die das Suchen in mehreren Dateien braucht, zuerst
+  `graphify update .` ausführen (baut den Graphen neu oder aktualisiert ihn;
+  in einer frischen Session fehlt er) und dann den Graphen nutzen, statt das
+  Repo neu zu durchsuchen: `graphify-out/GRAPH_REPORT.md` lesen und gezielt
   `graphify query "<Frage>"`, `graphify explain "<Symbol>"`,
   `graphify affected "<Symbol>"` (wen eine Änderung trifft) oder
   `graphify path "A" "B"` aufrufen.
-- **Nach** jeder fertig umgesetzten Änderung `graphify update .` ausführen und
-  `graphify-out/` im selben Branch mit committen und pushen.
 - Fehlt das Tool: `pip install graphifyy`. Nur `--code-only` bzw. `update`
   nutzen (lokal, ohne LLM); keinen Code an externe LLM-Backends schicken.
 
