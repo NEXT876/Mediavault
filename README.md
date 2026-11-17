@@ -144,6 +144,9 @@ pip install -e .
 python -m mediavault
 ```
 
+`requirements.txt` lists the same runtime dependencies for tools that expect
+one (`pip install -r requirements.txt`).
+
 Plugins are loaded from the `plugins/` folder next to the package, so start
 the app from the repository folder.
 
