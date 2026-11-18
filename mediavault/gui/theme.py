@@ -47,21 +47,23 @@ PALETTES: dict[str, dict[str, str]] = {
         "primary": "#4f8cff",
         "primary_hover": "#6ba0ff",
         "primary_text": "#ffffff",
-        "danger": "#e05252",
-        "danger_hover": "#f06565",
+        "danger": "#c93a3a",
+        "danger_hover": "#b83232",
         "selection_bg": "#26344c",
         "selection_fill": "rgba(79, 140, 255, 48)",
         "nav_active_bg": "#2c3b55",
+        "nav_active_text": "#8ab4ff",
         "scrollbar": "#454d5c",
         "scrollbar_hover": "#555f72",
-        "score_high": "#2f9e6f",
-        "score_mid": "#c08a2e",
-        "score_low": "#c2703a",
-        "score_bad": "#d9534f",
+        "score_high": "#1e7a52",
+        "score_mid": "#8a6d0f",
+        "score_low": "#b4501f",
+        "score_bad": "#c0392b",
         "accent": "#4f8cff",
         "accent_hover": "#6ba0ff",
-        "primary_fill": "#4f8cff",
-        "primary_fill_hover": "#6ba0ff",
+        # Darker than primary, so white button text stays readable (4.5:1).
+        "primary_fill": "#2f6be0",
+        "primary_fill_hover": "#2559c4",
         "primary_fill_text": "#ffffff",
         "glow": "",
     },
@@ -82,7 +84,8 @@ PALETTES: dict[str, dict[str, str]] = {
         "danger_hover": "#b91c1c",
         "selection_bg": "#e8efff",
         "selection_fill": "rgba(37, 99, 235, 40)",
-        "nav_active_bg": "#e3ecff",
+        "nav_active_bg": "#edf2ff",
+        "nav_active_text": "#2563eb",
         "scrollbar": "#c7cfdb",
         "scrollbar_hover": "#aeb9c9",
         "score_high": "#12805c",
@@ -110,15 +113,16 @@ PALETTES: dict[str, dict[str, str]] = {
         "primary": "#c084fc",
         "primary_hover": "#e879f9",
         "primary_text": "#0b0b12",
-        "danger": "#f43f5e",
-        "danger_hover": "#fb7185",
+        "danger": "#d42a4a",
+        "danger_hover": "#be123c",
         "selection_bg": "#1d1730",
         "selection_fill": "rgba(192, 132, 252, 50)",
         "nav_active_bg": "#221a37",
+        "nav_active_text": "#c084fc",
         "scrollbar": "#2c2a44",
         "scrollbar_hover": "#48436e",
-        "score_high": "#14b8a6",
-        "score_mid": "#8b5cf6",
+        "score_high": "#0d7d70",
+        "score_mid": "#7c3aed",
         "score_low": "#db2777",
         "score_bad": "#e11d48",
         "accent": _NEON_GRADIENT % ("#67e8f9", "#a78bfa", "#f472b6"),
@@ -214,6 +218,11 @@ QPushButton[variant="danger"]:hover {
     background-color: $danger_hover;
     border-color: $danger_hover;
 }
+QPushButton[variant="danger"]:disabled {
+    background-color: transparent;
+    border-color: $border;
+    color: $text_muted;
+}
 QPushButton[variant="ghost"] {
     background-color: transparent;
     border-color: transparent;
@@ -236,7 +245,7 @@ QPushButton[nav="true"]:hover { background-color: $hover; color: $text; }
 QPushButton[nav="true"]:checked {
     background-color: $nav_active_bg;
     border-color: $nav_active_bg;
-    color: $primary;
+    color: $nav_active_text;
 }
 
 QLineEdit, QTextEdit, QPlainTextEdit, QComboBox {
@@ -257,7 +266,7 @@ QComboBox QAbstractItemView {
     border-radius: 8px;
     padding: 4px;
     selection-background-color: $nav_active_bg;
-    selection-color: $primary;
+    selection-color: $nav_active_text;
     outline: none;
 }
 
@@ -381,7 +390,7 @@ QToolTip {
 }
 
 QMenu, QMessageBox { background-color: $surface; }
-QMenu::item:selected { background-color: $nav_active_bg; color: $primary; }
+QMenu::item:selected { background-color: $nav_active_bg; color: $nav_active_text; }
 """
 )
 
