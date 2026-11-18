@@ -44,6 +44,7 @@ def _nav_button(text: str, checkable: bool = False) -> QPushButton:
     """Create a left-aligned nav button; checkable ones are mutually exclusive."""
     btn = QPushButton(text)
     btn.setProperty("nav", True)
+    btn.setFocusPolicy(Qt.FocusPolicy.TabFocus)
     btn.setCursor(Qt.CursorShape.PointingHandCursor)
     if checkable:
         btn.setCheckable(True)
