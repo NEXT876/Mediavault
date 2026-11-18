@@ -85,13 +85,22 @@ def score_tier(score: int) -> str:
 
 
 def rounded_pixmap(
-    pixmap: QPixmap, size: int = IMAGE_SIZE, radius: int = IMAGE_RADIUS
+    pixmap: QPixmap,
+    size: int = IMAGE_SIZE,
+    radius: int = IMAGE_RADIUS,
+    fill: bool = False,
 ) -> QPixmap:
-    """Scale a pixmap into a centered square with rounded corners for the card."""
+    """Scale a pixmap into a centered square with rounded corners.
+
+    With ``fill`` the image covers the whole square and its edges are cropped,
+    as on the grid cards; otherwise it fits inside, as in the detail view.
+    """
     scaled = pixmap.scaled(
         size,
         size,
-        Qt.AspectRatioMode.KeepAspectRatio,
+        Qt.AspectRatioMode.KeepAspectRatioByExpanding
+        if fill
+        else Qt.AspectRatioMode.KeepAspectRatio,
         Qt.TransformationMode.SmoothTransformation,
     )
     canvas = QPixmap(size, size)
@@ -217,7 +226,7 @@ class MediaCard(QFrame):
     def set_pixmap(self, pixmap: QPixmap | None) -> None:
         """Show a preview, or the "Kein Vorschaubild" placeholder when there is none."""
         if pixmap and not pixmap.isNull():
-            self.img_lbl.setPixmap(rounded_pixmap(pixmap))
+            self.img_lbl.setPixmap(rounded_pixmap(pixmap, fill=True))
         else:
             self.img_lbl.setText("Kein Vorschaubild")
 

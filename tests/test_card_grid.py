@@ -105,3 +105,19 @@ def test_previews_loaded_for_another_library_are_discarded(app, monkeypatch):
     assert not grid.is_loading
     pixmap = grid._pixmaps["Bilder/1.png"]
     assert pixmap.toImage().pixelColor(0, 0) == QColor("blue")
+
+
+def test_card_preview_fills_the_square_and_detail_preview_fits(app):
+    from PyQt6.QtGui import QColor, QPixmap
+
+    from mediavault.gui.widgets import rounded_pixmap
+
+    wide = QPixmap(200, 100)
+    wide.fill(QColor("red"))
+
+    filled = rounded_pixmap(wide, size=100, radius=0, fill=True).toImage()
+    fitted = rounded_pixmap(wide, size=100, radius=0).toImage()
+
+    # Top edge: covered by the image on cards, empty (letterbox) in the detail view.
+    assert filled.pixelColor(50, 2).red() == 255
+    assert fitted.pixelColor(50, 2).alpha() == 0

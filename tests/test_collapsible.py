@@ -25,7 +25,7 @@ def settings(tmp_path):
 
 
 def _section(settings, **kwargs):
-    section = CollapsibleSection("IMPORT FROM WEB", KEY, settings=settings, **kwargs)
+    section = CollapsibleSection("WEB-IMPORT", KEY, settings=settings, **kwargs)
     button = QPushButton("Import")
     section.add_widget(button)
     return section, button
