@@ -65,3 +65,46 @@ def test_neon_cards_glow_only_when_selected_or_hovered(app, tmp_path):
 
     manager.apply(app, "dark")  # style change: no glow outside neon
     assert card.graphicsEffect() is None
+
+
+def _contrast(fg, bg):
+    """WCAG contrast ratio of two #rrggbb colors."""
+
+    def luminance(color):
+        channels = [int(color.lstrip("#")[i : i + 2], 16) / 255 for i in (0, 2, 4)]
+        linear = [
+            c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+            for c in channels
+        ]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+    high, low = sorted((luminance(fg), luminance(bg)), reverse=True)
+    return (high + 0.05) / (low + 0.05)
+
+
+@pytest.mark.parametrize("name", list(PALETTES))
+def test_text_contrast_meets_wcag_aa(name):
+    colors = PALETTES[name]
+    pairs = [
+        ("primary_fill_text", "primary_fill"),
+        ("nav_active_text", "nav_active_bg"),
+        ("text_muted", "bg"),
+        ("text_muted", "surface"),
+        ("text", "surface"),
+    ]
+    # Danger buttons and score badges use white text (see the stylesheet).
+    for key in ("danger", "score_high", "score_mid", "score_low", "score_bad"):
+        pairs.append(("#ffffff", key))
+    for fg, bg in pairs:
+        ratio = _contrast(colors.get(fg, fg), colors[bg])
+        assert ratio >= 4.5, (name, fg, bg, round(ratio, 2))
+
+
+def test_stylesheet_uses_only_the_type_scale():
+    import re
+
+    from mediavault.gui.theme import TYPE_SCALE
+
+    for name in PALETTES:
+        sizes = set(re.findall(r"font-size:\s*([^;]+);", build_stylesheet(name)))
+        assert sizes <= set(TYPE_SCALE.values()), sizes

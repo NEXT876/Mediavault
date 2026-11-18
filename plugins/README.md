@@ -1,6 +1,6 @@
 # MediaVault plugins
 
-Import sources for the "IMPORT FROM WEB" section of the sidebar. Every plugin
+Import sources for the "WEB-IMPORT" section of the sidebar. Every plugin
 found here gets its own button there; without plugins the section is hidden.
 MediaVault itself does the rest: the preview where you pick posts, the
 download queue, and the import with duplicate detection.

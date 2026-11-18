@@ -170,7 +170,7 @@ An import plugin is a folder with an `__init__.py` that defines `PLUGIN`.
 MediaVault discovers plugins in `plugins/` (committed) and `plugins/private/`
 (local only, ignored by git) at startup. A plugin only fetches posts; the
 preview, download queue and duplicate-aware import are provided by the app.
-Without plugins the "IMPORT FROM WEB" section of the sidebar stays hidden.
+Without plugins the "WEB-IMPORT" section of the sidebar stays hidden.
 
 The interface and a complete example are documented in
 [plugins/README.md](plugins/README.md).

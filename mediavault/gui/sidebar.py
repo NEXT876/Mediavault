@@ -35,7 +35,8 @@ def _section_label(text: str) -> QLabel:
 def _hint_label() -> QLabel:
     """Create a small wrapped status line under a button."""
     label = hint_label()
-    label.setContentsMargins(4, 0, 0, 0)
+    # Align with the icon of the nav buttons above (12px padding + 1px border).
+    label.setContentsMargins(13, 0, 0, 0)
     return label
 
 
@@ -43,6 +44,7 @@ def _nav_button(text: str, checkable: bool = False) -> QPushButton:
     """Create a left-aligned nav button; checkable ones are mutually exclusive."""
     btn = QPushButton(text)
     btn.setProperty("nav", True)
+    btn.setFocusPolicy(Qt.FocusPolicy.TabFocus)
     btn.setCursor(Qt.CursorShape.PointingHandCursor)
     if checkable:
         btn.setCheckable(True)
@@ -139,7 +141,7 @@ class Sidebar(QWidget):
 
         # Collapsed by default; the open/closed state is remembered.
         self._online_section = CollapsibleSection(
-            "IMPORT FROM WEB", ONLINE_SECTION_KEY, expanded=False
+            "WEB-IMPORT", ONLINE_SECTION_KEY, expanded=False
         )
         layout.addWidget(self._online_section)
         self._plugin_buttons: dict[str, QPushButton] = {}
