@@ -98,3 +98,13 @@ def test_text_contrast_meets_wcag_aa(name):
     for fg, bg in pairs:
         ratio = _contrast(colors.get(fg, fg), colors[bg])
         assert ratio >= 4.5, (name, fg, bg, round(ratio, 2))
+
+
+def test_stylesheet_uses_only_the_type_scale():
+    import re
+
+    from mediavault.gui.theme import TYPE_SCALE
+
+    for name in PALETTES:
+        sizes = set(re.findall(r"font-size:\s*([^;]+);", build_stylesheet(name)))
+        assert sizes <= set(TYPE_SCALE.values()), sizes

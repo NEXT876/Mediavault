@@ -49,6 +49,7 @@ def button(
     """
     btn = QPushButton(text)
     btn.setProperty("variant", variant)
+    btn.setFocusPolicy(Qt.FocusPolicy.TabFocus)
     if tooltip:
         btn.setToolTip(tooltip)
     if cursor:

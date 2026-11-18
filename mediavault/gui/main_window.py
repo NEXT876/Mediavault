@@ -136,6 +136,8 @@ class MainWindow(QMainWindow):
         self._volume_timer.setInterval(4000)
         self._volume_timer.timeout.connect(self._check_volumes)
         self._volume_timer.start()
+        # Start in the grid; otherwise Qt focuses the first sidebar button.
+        self.grid.setFocus()
 
     # --- UI construction ---
     def _setup_ui(self) -> None:

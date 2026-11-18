@@ -33,6 +33,15 @@ _NEON_GRADIENT = (
 # Names in the order the sidebar button cycles through them, with their labels.
 THEME_LABELS = {"dark": "Dunkles Theme", "light": "Helles Theme", "neon": "Neon-Theme"}
 
+# Type scale: modular scale "major second" (ratio 1.125) on a 16 px body
+# (12 pt), at most four sizes. Points follow the OS DPI setting, pixels do not.
+TYPE_SCALE = {
+    "fs_caption": "10.5pt",  # ms(-1) ~14 px: section labels, hints, badges
+    "fs_body": "12pt",  # ms(0) 16 px: everything else
+    "fs_heading": "15pt",  # ms(2) ~20 px: dialog titles, wheel result
+    "fs_title": "17pt",  # ms(3) ~23 px: app and page title
+}
+
 PALETTES: dict[str, dict[str, str]] = {
     "dark": {
         "bg": "#1f2228",
@@ -143,7 +152,7 @@ QMainWindow, QDialog {
 
 QWidget {
     color: $text;
-    font-size: 13px;
+    font-size: $fs_body;
 }
 
 QWidget#Sidebar {
@@ -151,25 +160,25 @@ QWidget#Sidebar {
     border-right: 1px solid $border;
 }
 
-QLabel#AppTitle { font-size: 21px; font-weight: 700; }
-QLabel#AppSubtitle { color: $text_muted; font-size: 11px; }
-QLabel#SectionLabel { color: $text_muted; font-size: 10px; font-weight: 700; }
+QLabel#AppTitle { font-size: $fs_title; font-weight: 600; }
+QLabel#AppSubtitle { color: $text_muted; font-size: $fs_caption; }
+QLabel#SectionLabel { color: $text_muted; font-size: $fs_caption; font-weight: 600; }
 QPushButton#SectionToggle {
     background: transparent;
     border: none;
     color: $text_muted;
-    font-size: 10px;
-    font-weight: 700;
+    font-size: $fs_caption;
+    font-weight: 600;
     text-align: left;
     padding: 10px 0 2px 4px;
 }
 QPushButton#SectionToggle:hover { color: $text; }
-QLabel#PageTitle { font-size: 24px; font-weight: 700; }
-QLabel#DialogTitle { font-size: 20px; font-weight: 700; }
+QLabel#PageTitle { font-size: $fs_title; font-weight: 600; }
+QLabel#DialogTitle { font-size: $fs_heading; font-weight: 600; }
 QLabel#MutedLabel, QLabel#CardGroup { color: $text_muted; }
-QLabel#FieldLabel { color: $text_muted; font-size: 11px; font-weight: 600; }
-QLabel#SelectionCount { font-weight: 700; }
-QLabel#HintLabel { color: $text_muted; font-size: 11px; }
+QLabel#FieldLabel { color: $text_muted; font-size: $fs_caption; font-weight: 600; }
+QLabel#SelectionCount { font-weight: 600; }
+QLabel#HintLabel { color: $text_muted; font-size: $fs_caption; }
 
 QWidget#ActionBar {
     background-color: $surface;
@@ -196,7 +205,7 @@ QPushButton[variant="primary"] {
     background-color: $primary_fill;
     color: $primary_fill_text;
     border: 1px solid $accent;
-    font-weight: 700;
+    font-weight: 600;
 }
 QPushButton[variant="primary"]:hover {
     background-color: $primary_fill_hover;
@@ -212,7 +221,7 @@ QPushButton[variant="danger"] {
     background-color: $danger;
     color: #ffffff;
     border: 1px solid $danger;
-    font-weight: 700;
+    font-weight: 600;
 }
 QPushButton[variant="danger"]:hover {
     background-color: $danger_hover;
@@ -325,18 +334,18 @@ QLabel#CardImage {
     border-radius: 8px;
     color: $text_muted;
 }
-QLabel#CardTitle { background: transparent; font-weight: 700; }
+QLabel#CardTitle { background: transparent; font-weight: 600; }
 QLabel#SelectionBadge {
     background-color: $accent;
     color: $primary_text;
     border-radius: 11px;
-    font-weight: 700;
+    font-weight: 600;
 }
 QLabel#ScoreBadge {
     border-radius: 9px;
     padding: 2px 8px;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: $fs_caption;
+    font-weight: 600;
 }
 QLabel#ScoreBadge[tier="high"] { background-color: $score_high; color: #ffffff; }
 QLabel#ScoreBadge[tier="mid"] { background-color: $score_mid; color: #ffffff; }
@@ -355,7 +364,7 @@ QFrame#DownloadRow {
     border-radius: 10px;
 }
 QLabel#DownloadIcon, QLabel#DownloadTitle { background: transparent; }
-QLabel#DownloadTitle { font-weight: 700; }
+QLabel#DownloadTitle { font-weight: 600; }
 QProgressBar {
     background-color: $surface_alt;
     border: none;
@@ -374,7 +383,7 @@ QFrame#WheelResult {
     border-radius: 10px;
 }
 QFrame#WheelPanel QLabel, QFrame#WheelResult QLabel { background: transparent; }
-QLabel#WheelWinner { font-size: 22px; font-weight: 700; }
+QLabel#WheelWinner { font-size: $fs_heading; font-weight: 600; }
 
 QRubberBand {
     background-color: $selection_fill;
@@ -391,6 +400,11 @@ QToolTip {
 
 QMenu, QMessageBox { background-color: $surface; }
 QMenu::item:selected { background-color: $nav_active_bg; color: $nav_active_text; }
+
+/* Last, so it wins over the variants: keyboard focus stays visible (WCAG
+   2.4.7). Buttons from the helpers take focus by Tab only, not by click. */
+QPushButton:focus:!pressed { border: 1px solid $accent; }
+QCheckBox::indicator:focus { border-color: $accent; }
 """
 )
 
@@ -398,7 +412,7 @@ QMenu::item:selected { background-color: $nav_active_bg; color: $nav_active_text
 def build_stylesheet(name: str) -> str:
     """Return the QSS for the requested theme, falling back to dark."""
     colors = PALETTES.get(name, PALETTES["dark"])
-    return _STYLESHEET.substitute(colors)
+    return _STYLESHEET.substitute({**TYPE_SCALE, **colors})
 
 
 def build_qpalette(name: str) -> QPalette:
