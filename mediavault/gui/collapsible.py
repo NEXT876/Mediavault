@@ -1,6 +1,6 @@
 """Collapsible sidebar section whose open/closed state is remembered.
 
-Used for the "IMPORT FROM WEB" area of the sidebar. The state is stored in
+Used for the "WEB-IMPORT" area of the sidebar. The state is stored in
 ``QSettings`` under a key per section, so it survives restarts.
 """
 
