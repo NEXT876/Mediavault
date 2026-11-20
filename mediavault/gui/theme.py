@@ -1,4 +1,4 @@
-"""Central dark, light and neon themes for the whole user interface.
+"""Central dark, light, neon and chaos themes for the whole user interface.
 
 A theme is a color palette (:data:`PALETTES`) that fills one shared Qt
 stylesheet template, plus a matching ``QPalette`` for native dialogs and
@@ -18,6 +18,8 @@ from PyQt6.QtCore import QObject, QSettings, pyqtSignal
 from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import QApplication, QWidget
 
+from mediavault.gui import chaos
+
 ORGANIZATION = "MediaVault"
 APPLICATION = "MediaTracker"
 SETTINGS_KEY = "appearance/theme"
@@ -31,7 +33,12 @@ _NEON_GRADIENT = (
 )
 
 # Names in the order the sidebar button cycles through them, with their labels.
-THEME_LABELS = {"dark": "Dunkles Theme", "light": "Helles Theme", "neon": "Neon-Theme"}
+THEME_LABELS = {
+    "dark": "Dunkles Theme",
+    "light": "Helles Theme",
+    "neon": "Neon-Theme",
+    "chaos": "CHAOS-Theme",
+}
 
 # Type scale: modular scale "major second" (ratio 1.125) on a 16 px body
 # (12 pt), at most four sizes. Points follow the OS DPI setting, pixels do not.
@@ -142,7 +149,100 @@ PALETTES: dict[str, dict[str, str]] = {
         # Card glow (#AARRGGBB, read by MediaCard); empty means no glow.
         "glow": "#ffb57cff",
     },
+    # Everything at once: rainbows, glow, sparkles (see chaos.py). Just for fun.
+    "chaos": {
+        "bg": "#14002b",
+        "surface": "#1f0540",
+        "surface_alt": "#2a0a55",
+        "hover": "#3d0f7a",
+        "input_bg": "#180236",
+        "border": "#ff00d4",
+        "border_strong": "#00f0ff",
+        "text": "#fff6a8",
+        "text_muted": "#7dfcff",
+        "primary": "#ff00d4",
+        "primary_hover": "#ffe600",
+        "primary_text": "#14002b",
+        "danger": "#d1001f",
+        "danger_hover": "#a8001a",
+        "selection_bg": "#4a0d6e",
+        "selection_fill": "rgba(255, 0, 212, 70)",
+        "nav_active_bg": "#3a005c",
+        "nav_active_text": "#39ff14",
+        "scrollbar": "#ff00d4",
+        "scrollbar_hover": "#ffe600",
+        "score_high": "#0a7a3a",
+        "score_mid": "#8a00c4",
+        "score_low": "#c2410c",
+        "score_bad": "#d1001f",
+        "accent": _NEON_GRADIENT % ("#ff0040", "#ffe600", "#00f0ff"),
+        "accent_hover": _NEON_GRADIENT % ("#39ff14", "#ff00d4", "#ffe600"),
+        "primary_fill": "#7a00b8",
+        "primary_fill_hover": "#9d00e6",
+        "primary_fill_text": "#ffffff",
+        "glow": "#ffff00d4",
+    },
 }
+
+_RAINBOW = (
+    "qlineargradient(x1:0, y1:0, x2:1, y2:%s, stop:0 #ff0040, stop:0.2 #ff8c00,"
+    " stop:0.4 #ffe600, stop:0.6 #00e676, stop:0.8 #00b0ff, stop:1 #d500f9)"
+)
+
+# Appended to the chaos stylesheet only; no font-size here (type scale test).
+_CHAOS_EXTRA = f"""
+* {{ font-family: "Comic Sans MS", "Comic Neue", "Chalkboard SE", cursive; }}
+QMainWindow, QDialog {{
+    background: qradialgradient(cx:0.5, cy:0.4, radius:1.1, fx:0.3, fy:0.2,
+        stop:0 #5a0fa0, stop:0.5 #14002b, stop:1 #000000);
+}}
+QPushButton, QPushButton[variant="primary"], QToolButton {{
+    background: {_RAINBOW % 0};
+    color: #14002b;
+    border: 3px dashed #ffffff;
+    border-radius: 14px;
+    font-weight: 900;
+}}
+QPushButton:hover, QPushButton[variant="primary"]:hover {{ border: 3px dotted #ffe600; }}
+QPushButton:pressed {{ padding-top: 9px; border-style: double; }}
+QLineEdit, QComboBox, QSpinBox, QTextEdit, QPlainTextEdit {{
+    border: 2px dashed #00f0ff;
+    border-radius: 12px;
+}}
+QLineEdit:focus, QComboBox:focus {{ border: 3px solid #39ff14; }}
+QScrollBar::handle:vertical {{ background: {_RAINBOW % 1}; border-radius: 6px; }}
+QScrollBar::handle:horizontal {{ background: {_RAINBOW % 0}; border-radius: 6px; }}
+QProgressBar::chunk {{ background: {_RAINBOW % 0}; border-radius: 6px; }}
+QToolTip {{
+    background: {_RAINBOW % 1};
+    color: #14002b;
+    border: 3px solid #ffffff;
+    font-weight: 900;
+}}
+QCheckBox::indicator:checked {{ background: #39ff14; border-radius: 9px; }}
+QPushButton[nav="true"]:checked {{
+    background: {_RAINBOW % 0};
+    color: #14002b;
+    border: 3px double #ffffff;
+}}
+QFrame#MediaCard {{
+    border: 3px solid {_RAINBOW % 1};
+    border-radius: 22px;
+}}
+QFrame#MediaCard:hover {{ border: 5px dashed #ffe600; }}
+QFrame#MediaCard[selected="true"] {{ border: 6px double #39ff14; }}
+QLabel#CardTitle, QLabel#AppTitle, QLabel#PageTitle, QLabel#DialogTitle {{
+    color: {_RAINBOW % 0};
+    font-weight: 900;
+}}
+QLabel#ScoreBadge {{ border: 2px dotted #ffffff; border-radius: 10px; }}
+QWidget#Sidebar {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #2a0050, stop:0.5 #00244d, stop:1 #4d0033);
+    border-right: 4px ridge #ff00d4;
+}}
+QWidget#ActionBar {{ border: 3px groove #00f0ff; border-radius: 18px; }}
+"""
 
 _STYLESHEET = Template(
     """
@@ -412,7 +512,8 @@ QCheckBox::indicator:focus { border-color: $accent; }
 def build_stylesheet(name: str) -> str:
     """Return the QSS for the requested theme, falling back to dark."""
     colors = PALETTES.get(name, PALETTES["dark"])
-    return _STYLESHEET.substitute({**TYPE_SCALE, **colors})
+    extra = _CHAOS_EXTRA if name == "chaos" else ""
+    return _STYLESHEET.substitute({**TYPE_SCALE, **colors}) + extra
 
 
 def build_qpalette(name: str) -> QPalette:
@@ -478,7 +579,7 @@ class ThemeManager(QObject):
 
     @property
     def name(self) -> str:
-        """Name of the active theme ("dark", "light" or "neon")."""
+        """Name of the active theme ("dark", "light", "neon" or "chaos")."""
         return self._name
 
     def palette(self) -> dict[str, str]:
@@ -505,6 +606,7 @@ class ThemeManager(QObject):
         app.setProperty("glow", PALETTES[self._name]["glow"])
         app.setPalette(build_qpalette(self._name))
         app.setStyleSheet(build_stylesheet(self._name))
+        chaos.set_enabled(app, self._name == "chaos")
         self._settings.setValue(SETTINGS_KEY, self._name)
         for widget in app.allWidgets():
             repolish(widget)
@@ -518,5 +620,5 @@ class ThemeManager(QObject):
         return names[(names.index(self._name) + 1) % len(names)]
 
     def toggle(self, app: QApplication) -> str:
-        """Switch to the next theme (dark → light → neon) and return its name."""
+        """Switch to the next theme (dark → light → neon → chaos) and return its name."""
         return self.apply(app, self.next_name)
