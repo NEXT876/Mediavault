@@ -16,7 +16,7 @@ from mediavault.gui.theme import THEME_LABELS
 from mediavault.gui.widgets import button, hint_label
 from mediavault.models import MediaType
 
-_THEME_ICONS = {"dark": "🌙", "light": "☀️", "neon": "✨", "chaos": "🎆", "underworld": "🔥", "heaven": "☁️"}
+_THEME_ICONS = {"dark": "🌙", "light": "☀️", "neon": "✨", "chaos": "🎆", "underworld": "🔥", "heaven": "☁️", "goon": "🌀"}
 
 # Pages besides the library views; MediaType values name the library views.
 DOWNLOADS = "downloads"

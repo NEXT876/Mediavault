@@ -38,6 +38,7 @@ _FRAME_MS = 33  # ~30 fps
 _GLOWABLE = (QAbstractButton, QLineEdit, QComboBox, QSpinBox)
 # colors: glow/particle/button colors, cycled; ink: readable heading colors.
 # click/trail: particle gravity (negative rises), fade: life lost per frame,
+# spiral: particle turn per frame (rad), breathe: slow glow pulse,
 # drop: window entrance (start offset in px, duration ms, easing).
 FLAVORS = {
     "chaos": {
@@ -47,6 +48,7 @@ FLAVORS = {
         "emoji": ["🌈", "✨", "🎆", "🦄", "💥", "🔥", "⭐", "🎉", "💖", "🚀"],
         "text": "#14002b", "checked": "#ffffff",
         "click": 0.45, "trail": 0.08, "fade": 0.025, "flicker": False,
+        "spiral": 0.0, "breathe": False,
         "drop": (-160, 900, QEasingCurve.Type.OutBounce),
     },
     "underworld": {
@@ -56,6 +58,7 @@ FLAVORS = {
         "emoji": ["🔥", "💀", "👹", "⛓️", "🦇", "🌋", "☠️", "🕷️", "😈"],
         "text": "#1a0000", "checked": "#ffd000",
         "click": -0.3, "trail": -0.15, "fade": 0.03, "flicker": True,
+        "spiral": 0.0, "breathe": False,
         "drop": (220, 1100, QEasingCurve.Type.OutBack),  # rises from below
     },
     "heaven": {
@@ -65,7 +68,18 @@ FLAVORS = {
         "emoji": ["☁️", "😇", "🕊️", "✨", "🌤️", "👼", "⭐", "🪽", "🎺"],
         "text": "#1d2b4f", "checked": "#d4af37",
         "click": 0.06, "trail": -0.05, "fade": 0.012, "flicker": False,
+        "spiral": 0.0, "breathe": False,
         "drop": (-260, 1800, QEasingCurve.Type.InOutSine),  # floats down
+    },
+    "goon": {
+        "colors": ("#ff2fa8", "#b026ff", "#ff75c8", "#6a00ff", "#ff0080"),
+        "ink": ("#ff2fa8", "#ff75c8", "#b026ff", "#ffd6f0"),
+        "glyphs": ["💦", "🥵", "🌀", "👁️", "💗", "🫠", "♡"],
+        "emoji": ["🥵", "💦", "🌀", "🫠", "👁️", "💗", "🔁", "📈"],
+        "text": "#12001a", "checked": "#ffd6f0",
+        "click": 0.0, "trail": 0.0, "fade": 0.012, "flicker": False,
+        "spiral": 0.12, "breathe": True,  # hypnotic
+        "drop": (-40, 2400, QEasingCurve.Type.InOutSine),
     },
 }
 _BORDERS = ("dashed", "dotted", "double", "groove", "ridge", "outset", "solid")
@@ -146,6 +160,10 @@ class _Overlay(QWidget):
             p[1] += p[3]
             p[3] += p[7]
             p[2] *= 0.97
+            turn = self.flavor["spiral"]
+            if turn:
+                c, s = math.cos(turn), math.sin(turn)
+                p[2], p[3] = p[2] * c - p[3] * s, p[2] * s + p[3] * c
             p[4] -= self.flavor["fade"]
         self.particles = [p for p in self.particles if p[4] > 0][-600:]
         self.setGeometry(self.parentWidget().rect())
@@ -305,6 +323,8 @@ class _Chaos(QObject):
             effect.setColor(_blend(colors, self._hue + i * 37))
             if self._flavor["flicker"] and effect.property("chaos"):
                 effect.setBlurRadius(random.uniform(18, 45))  # firelight
+            elif self._flavor["breathe"] and effect.property("chaos"):
+                effect.setBlurRadius(38 + 30 * math.sin(self._frame * 0.07))
 
         if _alive(self._disco):
             stops = ", ".join(

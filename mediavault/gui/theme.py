@@ -43,6 +43,7 @@ THEME_LABELS = {
     "chaos": "CHAOS-Theme",
     "underworld": "Unterwelt-Theme",
     "heaven": "Himmel-Theme",
+    "goon": "GOON-Theme",
 }
 
 # Type scale: modular scale "major second" (ratio 1.125) on a 16 px body
@@ -253,6 +254,39 @@ PALETTES: dict[str, dict[str, str]] = {
         "primary_fill_text": "#ffffff",
         "glow": "#ffffd700",
     },
+    # For degenerates: hypnotic pink and violet, spiralling particles.
+    "goon": {
+        "bg": "#12001a",
+        "surface": "#1e0029",
+        "surface_alt": "#2a0038",
+        "hover": "#3d0052",
+        "input_bg": "#18001f",
+        "border": "#ff2fa8",
+        "border_strong": "#b026ff",
+        "text": "#ffd6f0",
+        "text_muted": "#ff8fd1",
+        "primary": "#ff2fa8",
+        "primary_hover": "#ff75c8",
+        "primary_text": "#12001a",
+        "danger": "#c4005e",
+        "danger_hover": "#9e004c",
+        "selection_bg": "#4a0060",
+        "selection_fill": "rgba(255, 47, 168, 70)",
+        "nav_active_bg": "#3a0048",
+        "nav_active_text": "#ff75c8",
+        "scrollbar": "#b026ff",
+        "scrollbar_hover": "#ff2fa8",
+        "score_high": "#0a7a3a",
+        "score_mid": "#7a00b8",
+        "score_low": "#b3006b",
+        "score_bad": "#c4005e",
+        "accent": _NEON_GRADIENT % ("#ff2fa8", "#b026ff", "#ff75c8"),
+        "accent_hover": _NEON_GRADIENT % ("#ff75c8", "#6a00ff", "#ff0080"),
+        "primary_fill": "#8a0057",
+        "primary_fill_hover": "#a8006b",
+        "primary_fill_text": "#ffffff",
+        "glow": "#ffff2fa8",
+    },
 }
 
 def _gradient(colors: tuple[str, ...], vertical: bool = False) -> str:
@@ -284,6 +318,13 @@ _PARTY_LOOKS = {
         "side": ("#ffffff", "#e8f5ff", "#fff3cc"),
         "on": "#1d2b4f", "line": "#ffffff", "hot": "#e6c35c",
         "cool": "#9fd8ff", "ok": "#d4af37", "edge": "#e6c35c",
+    },
+    "goon": {
+        "font": '"Impact", "Haettenschweiler", "Anton", sans-serif',
+        "bg": ("#5a0070", "#12001a", "#000000"),
+        "side": ("#2a0038", "#4a0040", "#12001a"),
+        "on": "#12001a", "line": "#ffd6f0", "hot": "#ff2fa8",
+        "cool": "#b026ff", "ok": "#ff75c8", "edge": "#ff2fa8",
     },
 }
 
