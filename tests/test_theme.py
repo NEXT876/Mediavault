@@ -40,7 +40,7 @@ def test_toggle_cycles_through_all_themes(app, tmp_path):
     for _ in THEME_LABELS:
         seen.append(manager.toggle(app))
 
-    assert seen == ["dark", "light", "neon", "chaos", "dark"]
+    assert seen == ["dark", "light", "neon", "chaos", "underworld", "heaven", "dark"]
     assert settings.value("appearance/theme") == "dark"
 
 
@@ -110,13 +110,14 @@ def test_stylesheet_uses_only_the_type_scale():
         assert sizes <= set(TYPE_SCALE.values()), sizes
 
 
-def test_chaos_theme_adds_and_removes_its_effects(app, tmp_path):
+@pytest.mark.parametrize("name", ["chaos", "underworld", "heaven"])
+def test_party_theme_adds_and_removes_its_effects(app, tmp_path, name):
     from PyQt6.QtWidgets import QPushButton
 
     settings = QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat)
     manager = ThemeManager(settings)
     button = QPushButton("x")
-    manager.apply(app, "chaos")
+    manager.apply(app, name)
     assert button.graphicsEffect() is not None
 
     manager.apply(app, "dark")

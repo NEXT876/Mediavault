@@ -1,4 +1,7 @@
-"""Central dark, light, neon and chaos themes for the whole user interface.
+"""Central themes for the whole user interface.
+
+Dark, light and neon are the real ones; chaos, underworld and heaven are
+over-the-top party themes animated by :mod:`mediavault.gui.chaos`.
 
 A theme is a color palette (:data:`PALETTES`) that fills one shared Qt
 stylesheet template, plus a matching ``QPalette`` for native dialogs and
@@ -38,6 +41,8 @@ THEME_LABELS = {
     "light": "Helles Theme",
     "neon": "Neon-Theme",
     "chaos": "CHAOS-Theme",
+    "underworld": "Unterwelt-Theme",
+    "heaven": "Himmel-Theme",
 }
 
 # Type scale: modular scale "major second" (ratio 1.125) on a 16 px body
@@ -182,67 +187,170 @@ PALETTES: dict[str, dict[str, str]] = {
         "primary_fill_text": "#ffffff",
         "glow": "#ffff00d4",
     },
+    # CHAOS, but from hell: embers, skulls, fire gradients.
+    "underworld": {
+        "bg": "#0d0000",
+        "surface": "#1a0303",
+        "surface_alt": "#260606",
+        "hover": "#3d0a0a",
+        "input_bg": "#140202",
+        "border": "#8b0000",
+        "border_strong": "#ff4500",
+        "text": "#ffd9b3",
+        "text_muted": "#ff9966",
+        "primary": "#ff4500",
+        "primary_hover": "#ffae00",
+        "primary_text": "#0d0000",
+        "danger": "#b3001b",
+        "danger_hover": "#8a0015",
+        "selection_bg": "#3d0a0a",
+        "selection_fill": "rgba(255, 69, 0, 60)",
+        "nav_active_bg": "#3a0505",
+        "nav_active_text": "#ffae00",
+        "scrollbar": "#8b0000",
+        "scrollbar_hover": "#ff4500",
+        "score_high": "#2e6b1f",
+        "score_mid": "#9a3d00",
+        "score_low": "#b3001b",
+        "score_bad": "#7a0000",
+        "accent": _NEON_GRADIENT % ("#ff2200", "#ff7b00", "#ffcc00"),
+        "accent_hover": _NEON_GRADIENT % ("#ffcc00", "#ff2200", "#8b0000"),
+        "primary_fill": "#8b0000",
+        "primary_fill_hover": "#a30000",
+        "primary_fill_text": "#ffffff",
+        "glow": "#ffff4500",
+    },
+    # CHAOS, but from above: clouds, gold, feathers floating down.
+    "heaven": {
+        "bg": "#eaf6ff",
+        "surface": "#ffffff",
+        "surface_alt": "#f3f9ff",
+        "hover": "#dcefff",
+        "input_bg": "#ffffff",
+        "border": "#bfe0ff",
+        "border_strong": "#e6c35c",
+        "text": "#1d2b4f",
+        "text_muted": "#4a5f86",
+        "primary": "#3b82c4",
+        "primary_hover": "#c9a227",
+        "primary_text": "#ffffff",
+        "danger": "#c0392b",
+        "danger_hover": "#a93226",
+        "selection_bg": "#fff6d6",
+        "selection_fill": "rgba(255, 215, 0, 60)",
+        "nav_active_bg": "#fff4cc",
+        "nav_active_text": "#7a5a00",
+        "scrollbar": "#bfe0ff",
+        "scrollbar_hover": "#e6c35c",
+        "score_high": "#12805c",
+        "score_mid": "#b45309",
+        "score_low": "#c2410c",
+        "score_bad": "#d92d20",
+        "accent": _NEON_GRADIENT % ("#9fd8ff", "#ffffff", "#e6c35c"),
+        "accent_hover": _NEON_GRADIENT % ("#e6c35c", "#ffffff", "#9fd8ff"),
+        "primary_fill": "#2563eb",
+        "primary_fill_hover": "#1d4ed8",
+        "primary_fill_text": "#ffffff",
+        "glow": "#ffffd700",
+    },
 }
 
-_RAINBOW = (
-    "qlineargradient(x1:0, y1:0, x2:1, y2:%s, stop:0 #ff0040, stop:0.2 #ff8c00,"
-    " stop:0.4 #ffe600, stop:0.6 #00e676, stop:0.8 #00b0ff, stop:1 #d500f9)"
-)
+def _gradient(colors: tuple[str, ...], vertical: bool = False) -> str:
+    """QSS linear gradient through ``colors`` (left→right, or top→bottom)."""
+    stops = ", ".join(f"stop:{i / (len(colors) - 1):.2f} {c}" for i, c in enumerate(colors))
+    end = "x2:0, y2:1" if vertical else "x2:1, y2:0"
+    return f"qlineargradient(x1:0, y1:0, {end}, {stops})"
 
-# Appended to the chaos stylesheet only; no font-size here (type scale test).
-_CHAOS_EXTRA = f"""
-* {{ font-family: "Comic Sans MS", "Comic Neue", "Chalkboard SE", cursive; }}
+
+# Look of the three party themes; their animations live in chaos.FLAVORS.
+_PARTY_LOOKS = {
+    "chaos": {
+        "font": '"Comic Sans MS", "Comic Neue", "Chalkboard SE", cursive',
+        "bg": ("#5a0fa0", "#14002b", "#000000"),
+        "side": ("#2a0050", "#00244d", "#4d0033"),
+        "on": "#14002b", "line": "#ffffff", "hot": "#ffe600",
+        "cool": "#00f0ff", "ok": "#39ff14", "edge": "#ff00d4",
+    },
+    "underworld": {
+        "font": '"Chiller", "Creepster", "Papyrus", "Old English Text MT", serif',
+        "bg": ("#5c0a00", "#1a0000", "#000000"),
+        "side": ("#000000", "#2b0000", "#6b1400"),
+        "on": "#1a0000", "line": "#2b0000", "hot": "#ffae00",
+        "cool": "#ff4500", "ok": "#ffd000", "edge": "#ff4500",
+    },
+    "heaven": {
+        "font": '"Segoe Script", "Lucida Handwriting", "Brush Script MT", cursive',
+        "bg": ("#ffffff", "#e3f3ff", "#bfe0ff"),
+        "side": ("#ffffff", "#e8f5ff", "#fff3cc"),
+        "on": "#1d2b4f", "line": "#ffffff", "hot": "#e6c35c",
+        "cool": "#9fd8ff", "ok": "#d4af37", "edge": "#e6c35c",
+    },
+}
+
+
+def _party_extra(name: str) -> str:
+    """Extra QSS for a party theme; no font-size here (type scale test)."""
+    look = _PARTY_LOOKS[name]
+    flow = _gradient(chaos.FLAVORS[name]["colors"])
+    ink = _gradient(chaos.FLAVORS[name]["ink"])
+    drop = _gradient(chaos.FLAVORS[name]["colors"], vertical=True)
+    bg0, bg1, bg2 = look["bg"]
+    s0, s1, s2 = look["side"]
+    on, line, hot, cool, ok, edge = (look[k] for k in ("on", "line", "hot", "cool", "ok", "edge"))
+    return f"""
+* {{ font-family: {look["font"]}; }}
 QMainWindow, QDialog {{
     background: qradialgradient(cx:0.5, cy:0.4, radius:1.1, fx:0.3, fy:0.2,
-        stop:0 #5a0fa0, stop:0.5 #14002b, stop:1 #000000);
+        stop:0 {bg0}, stop:0.5 {bg1}, stop:1 {bg2});
 }}
 QPushButton, QPushButton[variant="primary"], QToolButton {{
-    background: {_RAINBOW % 0};
-    color: #14002b;
-    border: 3px dashed #ffffff;
+    background: {flow};
+    color: {on};
+    border: 3px dashed {line};
     border-radius: 14px;
     font-weight: 900;
 }}
-QPushButton:hover, QPushButton[variant="primary"]:hover {{ border: 3px dotted #ffe600; }}
+QPushButton:hover, QPushButton[variant="primary"]:hover {{ border: 3px dotted {hot}; }}
 QPushButton:pressed {{ padding-top: 9px; border-style: double; }}
 QLineEdit, QComboBox, QSpinBox, QTextEdit, QPlainTextEdit {{
-    border: 2px dashed #00f0ff;
+    border: 2px dashed {cool};
     border-radius: 12px;
 }}
-QLineEdit:focus, QComboBox:focus {{ border: 3px solid #39ff14; }}
-QScrollBar::handle:vertical {{ background: {_RAINBOW % 1}; border-radius: 6px; }}
-QScrollBar::handle:horizontal {{ background: {_RAINBOW % 0}; border-radius: 6px; }}
-QProgressBar::chunk {{ background: {_RAINBOW % 0}; border-radius: 6px; }}
+QLineEdit:focus, QComboBox:focus {{ border: 3px solid {ok}; }}
+QScrollBar::handle:vertical {{ background: {flow}; border-radius: 6px; }}
+QScrollBar::handle:horizontal {{ background: {flow}; border-radius: 6px; }}
+QProgressBar::chunk {{ background: {flow}; border-radius: 6px; }}
 QToolTip {{
-    background: {_RAINBOW % 1};
-    color: #14002b;
-    border: 3px solid #ffffff;
+    background: {drop};
+    color: {on};
+    border: 3px solid {line};
     font-weight: 900;
 }}
-QCheckBox::indicator:checked {{ background: #39ff14; border-radius: 9px; }}
+QCheckBox::indicator:checked {{ background: {ok}; border-radius: 9px; }}
 QPushButton[nav="true"]:checked {{
-    background: {_RAINBOW % 0};
-    color: #14002b;
-    border: 3px double #ffffff;
+    background: {flow};
+    color: {on};
+    border: 3px double {line};
 }}
 QFrame#MediaCard {{
-    border: 3px solid {_RAINBOW % 1};
+    border: 3px solid {drop};
     border-radius: 22px;
 }}
-QFrame#MediaCard:hover {{ border: 5px dashed #ffe600; }}
-QFrame#MediaCard[selected="true"] {{ border: 6px double #39ff14; }}
+QFrame#MediaCard:hover {{ border: 5px dashed {hot}; }}
+QFrame#MediaCard[selected="true"] {{ border: 6px double {ok}; }}
 QLabel#CardTitle, QLabel#AppTitle, QLabel#PageTitle, QLabel#DialogTitle {{
-    color: {_RAINBOW % 0};
+    color: {ink};
     font-weight: 900;
 }}
-QLabel#ScoreBadge {{ border: 2px dotted #ffffff; border-radius: 10px; }}
+QLabel#ScoreBadge {{ border: 2px dotted {line}; border-radius: 10px; }}
 QWidget#Sidebar {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #2a0050, stop:0.5 #00244d, stop:1 #4d0033);
-    border-right: 4px ridge #ff00d4;
+        stop:0 {s0}, stop:0.5 {s1}, stop:1 {s2});
+    border-right: 4px ridge {edge};
 }}
-QWidget#ActionBar {{ border: 3px groove #00f0ff; border-radius: 18px; }}
+QWidget#ActionBar {{ border: 3px groove {cool}; border-radius: 18px; }}
 """
+
 
 _STYLESHEET = Template(
     """
@@ -512,7 +620,7 @@ QCheckBox::indicator:focus { border-color: $accent; }
 def build_stylesheet(name: str) -> str:
     """Return the QSS for the requested theme, falling back to dark."""
     colors = PALETTES.get(name, PALETTES["dark"])
-    extra = _CHAOS_EXTRA if name == "chaos" else ""
+    extra = _party_extra(name) if name in _PARTY_LOOKS else ""
     return _STYLESHEET.substitute({**TYPE_SCALE, **colors}) + extra
 
 
@@ -579,7 +687,7 @@ class ThemeManager(QObject):
 
     @property
     def name(self) -> str:
-        """Name of the active theme ("dark", "light", "neon" or "chaos")."""
+        """Name of the active theme, a key of :data:`PALETTES`."""
         return self._name
 
     def palette(self) -> dict[str, str]:
@@ -606,7 +714,7 @@ class ThemeManager(QObject):
         app.setProperty("glow", PALETTES[self._name]["glow"])
         app.setPalette(build_qpalette(self._name))
         app.setStyleSheet(build_stylesheet(self._name))
-        chaos.set_enabled(app, self._name == "chaos")
+        chaos.set_enabled(app, self._name if self._name in chaos.FLAVORS else None)
         self._settings.setValue(SETTINGS_KEY, self._name)
         for widget in app.allWidgets():
             repolish(widget)
@@ -620,5 +728,5 @@ class ThemeManager(QObject):
         return names[(names.index(self._name) + 1) % len(names)]
 
     def toggle(self, app: QApplication) -> str:
-        """Switch to the next theme (dark → light → neon → chaos) and return its name."""
+        """Switch to the next theme (dark → light → … → heaven) and return its name."""
         return self.apply(app, self.next_name)
