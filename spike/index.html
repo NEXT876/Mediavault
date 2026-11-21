@@ -77,7 +77,7 @@ async function test (name, fn) {
   try {
     const r = await fn()
     // Nur {ok, detail}-Ergebnisse werden als Zeile gezeigt; andere Rückgabewerte (Storage, Buffer) sind Daten.
-    if (r && typeof r === 'object' && 'detail' in r) row(name, r.ok ?? true, r.detail)
+    if (r && typeof r === 'object' && 'detail' in r) row(name, 'ok' in r ? r.ok : true, r.detail)
     return r
   } catch (e) {
     row(name, false, `${e?.name || 'Fehler'}: ${e?.message || e}`)
