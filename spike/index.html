@@ -148,12 +148,17 @@ async function run (storage, fromSession) {
 
   await test('Konto / Transferlimit', async () => {
     const a = await storage.getAccountInfo()
-    return { ok: null, detail: `Typ ${a.type}, Speicher ${MB(a.spaceUsed)} / ${MB(a.spaceTotal)}, Download-Transfer ${MB(a.downloadBandwidthUsed)} / ${a.downloadBandwidthTotal ? MB(a.downloadBandwidthTotal) : 'keine Angabe (Gratis: dynamisch)'}` }
+    return { ok: null, detail: `Typ ${a.type}, Speicher ${MB(a.spaceUsed)} / ${MB(a.spaceTotal)}, Download-Transfer ${MB(a.downloadBandwidthUsed)} / ${a.downloadBandwidthTotal && a.downloadBandwidthTotal !== 10 * 1024 ** 5 ? MB(a.downloadBandwidthTotal) : 'keine Angabe (Gratis: dynamisch)'}` }
   })
 
   const folderName = $('folder').value.trim()
-  const folder = storage.root.children?.find(f => f.directory && f.name === folderName) || storage.find(f => f.directory && f.name === folderName, true)
-  if (!folder) { row(`Ordner „${folderName}“`, false, 'nicht gefunden'); return finish(storage) }
+  const norm = s => (s || '').trim().toLowerCase()
+  const allDirs = Object.values(storage.files).filter(f => f.directory)
+  const folder = allDirs.find(f => norm(f.name) === norm(folderName))
+  if (!folder) {
+    row(`Ordner „${folderName}“`, false, 'nicht gefunden. Sichtbare Ordner: ' + allDirs.map(f => `„${f.name ?? '(Name nicht entschlüsselt)'}“ (${f.children?.length ?? 0} Einträge)`).join(', '))
+    return finish(storage)
+  }
   const files = (folder.children || []).filter(f => !f.directory)
   const imgs = files.filter(f => IMAGE[ext(f.name)])
   const vids = files.filter(f => VIDEO[ext(f.name)]).sort((a, b) => a.size - b.size)
