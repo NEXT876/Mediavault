@@ -128,6 +128,7 @@
   @media (min-width:700px) {
     .grid { grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px; }
     .tile { padding:8px; }
+    .badge::before { content:"Score "; }
     .thumb { border-radius:6px; }
   }
 
@@ -136,9 +137,20 @@
   #close { position:absolute; top:max(12px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right));
     width:44px; height:44px; padding:0; border-radius:22px; font-size:20px; z-index:2;
     background:rgba(0,0,0,.45); color:#fff; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
-  #vbar { position:absolute; left:0; right:0; bottom:0; z-index:2; color:#fff;
+  #vfoot { position:absolute; left:0; right:0; bottom:0; z-index:2; color:#fff;
     padding:32px max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     background:linear-gradient(transparent, rgba(0,0,0,.75)); }
+  #rate { max-width:480px; margin:0 auto 8px; padding:10px; border-radius:12px; text-align:center; background:rgba(0,0,0,.55); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+  #rstats { margin:0 0 8px; font-size:14px; }
+  #rbtns, #rform { display:flex; gap:8px; }
+  #rate button, #rval { flex:1; min-width:44px; min-height:44px; border-radius:8px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.14); color:#fff; font-size:16px; }
+  #rbtns button { font-weight:600; transition:background .2s; }
+  #rbtns button.ok { background:var(--pfill); border-color:var(--primary); }
+  #rset { width:100%; margin-top:8px; }
+  #rform { margin-top:8px; }
+  #rform button { flex:0 0 auto; padding:0 16px; }
+  #rval { flex:1 1 0; min-width:0; padding:0 12px; text-align:center; background:rgba(0,0,0,.5); }
+  @media (max-height:500px) { #rstats { margin-bottom:4px; } #rset, #rform { margin-top:4px; } #vfoot { padding-top:16px; } }
   #vbar .row { display:flex; align-items:center; gap:10px; }
   #vbar .row + .row { justify-content:center; gap:28px; margin-top:4px; }
   #vbar span { font-size:13px; font-variant-numeric:tabular-nums; min-width:3.2em; }
@@ -151,8 +163,8 @@
   #vseek::-webkit-slider-runnable-track { height:4px; border-radius:2px;
     background:linear-gradient(to right, #fff var(--p, 0%), rgba(255,255,255,.35) var(--p, 0%)); }
   #vseek::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; margin-top:-6px; border-radius:8px; background:#fff; }
-  #close, #vbar { transition:opacity .25s; }
-  #viewer.idle #close, #viewer.idle #vbar { opacity:0; pointer-events:none; }
+  #close, #vfoot { transition:opacity .25s; }
+  #viewer.idle #close, #viewer.idle #vfoot { opacity:0; pointer-events:none; }
   #vprog { position:absolute; left:0; right:0; bottom:0; height:4px; width:100%; appearance:none; border:0; background:#333; }
   #vprog::-webkit-progress-bar { background:#333; }
   #vprog::-webkit-progress-value { background:#eee; }
@@ -248,13 +260,25 @@
 </div>
 <div id="viewer" hidden>
   <button id="close" aria-label="Schließen">✕</button>
-  <div id="vbar" hidden>
-    <div class="row"><span id="vtime">0:00</span><input id="vseek" type="range" min="0" max="1000" value="0" aria-label="Position"><span id="vdur">0:00</span></div>
-    <div class="row">
-      <button id="vback" aria-label="10 Sekunden zurück">−10</button>
-      <button id="vplay" aria-label="Abspielen">▶&#xFE0E;</button>
-      <button id="vfwd" aria-label="10 Sekunden vor">+10</button>
-      <button id="loop" aria-pressed="false" aria-label="Wiederholen">↻</button>
+  <div id="vfoot">
+    <div id="rate" hidden>
+      <p id="rstats" aria-live="polite"></p>
+      <div id="rbtns"></div>
+      <button id="rset">Score setzen</button>
+      <form id="rform" hidden>
+        <input id="rval" type="number" inputmode="numeric" min="1" max="100" step="1" required aria-label="Score (1–100)">
+        <button type="submit">OK</button>
+        <button type="button" id="rcancel">Abbrechen</button>
+      </form>
+    </div>
+    <div id="vbar" hidden>
+      <div class="row"><span id="vtime">0:00</span><input id="vseek" type="range" min="0" max="1000" value="0" aria-label="Position"><span id="vdur">0:00</span></div>
+      <div class="row">
+        <button id="vback" aria-label="10 Sekunden zurück">−10</button>
+        <button id="vplay" aria-label="Abspielen">▶&#xFE0E;</button>
+        <button id="vfwd" aria-label="10 Sekunden vor">+10</button>
+        <button id="loop" aria-pressed="false" aria-label="Wiederholen">↻</button>
+      </div>
     </div>
   </div>
   <div id="vmedia" style="display:contents"></div>

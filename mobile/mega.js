@@ -42,6 +42,7 @@ export const epoch = () => generation // lets callers notice a logout between tw
 export async function logout() {
   generation++
   for (const k of ['mv-session', 'mv-folder', 'mv-sort']) localStorage.removeItem(k)
+  for (const k of Object.keys(localStorage)) if (/^mv-(queue|sent):/.test(k)) localStorage.removeItem(k)
   await caches.delete('mv-files')
   await caches.delete('mv-thumbs')
 }

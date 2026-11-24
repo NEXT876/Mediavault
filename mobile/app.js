@@ -1,5 +1,7 @@
 import { login, restoreSession, logout, getFile, cachedThumb, makeThumb, upload, epoch, findLibrary, loadExport } from './mega.js'
-import { mediaKind, collectMedia, listFolders, sortEntries, isNetworkError, relPath } from './logic.js'
+import { mediaKind, collectMedia, listFolders, sortEntries, isNetworkError, scoreTier } from './logic.js'
+import * as scores from './scores.js'
+import { showRating, render as renderRating } from './rating.js'
 
 const $ = id => document.getElementById(id)
 const store = {
@@ -61,6 +63,8 @@ function openFolder(folder) {
   store.set('mv-folder', folder.nodeId)
   state.folder = folder
   state.lib = undefined
+  scores.flush() // the old library's queue (a no-op without one)
+  scores.activate(null)
   renderMore()
   for (const e of document.querySelectorAll('.fname')) e.textContent = folder === state.storage.root ? 'Alles (Cloud Drive)' : folder.name
   show('s-lib')
@@ -82,7 +86,8 @@ async function loadLibrary(folder) {
   state.lib = found && { root: found.root, dataDir: found.dataDir, export: data }
   // a data folder whose export failed to load (offline) keeps the remembered theme
   if (!found || data) applyTheme(data?.theme)
-  state.tiles.forEach(retitle)
+  scores.activate(state.lib)
+  state.tiles.forEach(refreshTile)
   renderMore()
 }
 
@@ -152,8 +157,11 @@ function placeholder(tile, symbol) {
   ph.className = 'ph'
   const b = document.createElement('b')
   b.textContent = symbol
-  ph.append(b, tile.node.name)
+  const t = document.createElement('span')
+  t.className = 'pt'
+  ph.append(b, t)
   tile.thumb.replaceChildren(ph)
+  refreshTile(tile)
 }
 
 async function loadTile(tile) {
@@ -171,10 +179,23 @@ async function loadTile(tile) {
   }
 }
 
-const retitle = tile => {
-  const items = state.lib?.export?.items
-  tile.ttl.textContent = items?.[relPath(tile.node, state.lib.root)]?.title || tile.node.name.replace(/\.[^.]+$/, '')
+// title, score badge and group of a tile (without MediaVault data: file name only)
+function refreshTile(tile) {
+  const title = scores.title(tile.node), it = scores.item(tile.node)
+  tile.ttl.textContent = title
+  tile.thumb.querySelector('.pt')?.replaceChildren(title)
+  tile.badge.hidden = !it
+  if (it) {
+    tile.badge.textContent = it.score
+    tile.badge.dataset.tier = scoreTier(it.score)
+  }
+  tile.grp.textContent = it?.group ?? ''
 }
+scores.onChange(node => {
+  const tile = state.tiles.get(node)
+  if (tile) refreshTile(tile)
+  renderRating()
+})
 
 function renderGrid() {
   observer.disconnect()
@@ -199,10 +220,10 @@ function renderGrid() {
     const part = (cls, tag = 'span') => Object.assign(document.createElement(tag), { className: cls })
     tile.thumb = part('thumb')
     tile.ttl = part('ttl')
-    const badge = part('badge') // Task 4 fills badge and group
-    badge.hidden = true
-    tile.append(tile.thumb, tile.ttl, badge, part('grp'))
-    retitle(tile)
+    tile.badge = part('badge')
+    tile.grp = part('grp')
+    tile.append(tile.thumb, tile.ttl, tile.badge, tile.grp)
+    refreshTile(tile)
     tile.onclick = () => openViewer(i)
     state.tiles.set(node, tile)
     observer.observe(tile)
@@ -269,7 +290,10 @@ async function openViewer(i) {
   $('viewer').hidden = false
   $('vmsg').hidden = true
   chrome(true)
+  scores.record(node, 'view') // viewing on the phone counts
+  showRating(node)
   $('vbar').hidden = mediaKind(node.name) !== 'video'
+  $('vfoot').hidden = $('vbar').hidden && $('rate').hidden
   $('vseek').value = 0
   $('vtime').textContent = $('vdur').textContent = '0:00'
   $('vprog').hidden = false
@@ -317,6 +341,7 @@ function closeViewer() {
   token++
   ctrl?.abort()
   clearMedia()
+  showRating(null)
   $('viewer').hidden = true
 }
 
@@ -347,7 +372,8 @@ $('vseek').oninput = () => {
 }
 $('vseek').onchange = () => { scrubbing = false }
 
-// Close button and video bar hide 3 s into playback; a tap on the video toggles them, paused keeps them shown.
+// Close button, rating panel and video bar hide 3 s into playback of a video; a tap on the viewer toggles them
+// (images never hide on their own), paused keeps them shown.
 let idleTimer
 function chrome(show) {
   clearTimeout(idleTimer)
@@ -360,8 +386,8 @@ $('viewer').addEventListener('touchstart', e => { tap = e.changedTouches[0] }, {
 $('viewer').addEventListener('touchend', e => {
   const s = tap, t = e.changedTouches[0]
   tap = null
-  if (!s || !video()) return
-  if (e.target.closest('#vbar')) return chrome(true) // using the bar keeps it shown
+  if (!s) return
+  if (e.target.closest('#vfoot')) return chrome(true) // using the bar or the panel keeps them shown
   if (e.target.closest('button') || Math.hypot(t.clientX - s.clientX, t.clientY - s.clientY) > 10) return
   chrome($('viewer').classList.contains('idle'))
 }, { passive: true })
@@ -375,7 +401,7 @@ $('loop').onclick = () => {
 }
 showLoop()
 let touch = null
-$('viewer').addEventListener('touchstart', e => { touch = e.target.closest('#vbar') ? null : e.changedTouches[0] }, { passive: true })
+$('viewer').addEventListener('touchstart', e => { touch = e.target.closest('#vfoot') ? null : e.changedTouches[0] }, { passive: true })
 $('viewer').addEventListener('touchend', e => {
   if (!touch) return
   const dx = e.changedTouches[0].clientX - touch.clientX
@@ -384,7 +410,7 @@ $('viewer').addEventListener('touchend', e => {
   if (Math.abs(dx) >= 50 && Math.abs(dx) > Math.abs(dy)) openViewer(current + (dx < 0 ? 1 : -1))
 }, { passive: true })
 document.addEventListener('keydown', e => {
-  if ($('viewer').hidden) return
+  if ($('viewer').hidden || e.target.id === 'rval') return // arrows move the cursor in the number field
   if (e.key === 'ArrowRight') openViewer(current + 1)
   else if (e.key === 'ArrowLeft') openViewer(current - 1)
   else if (e.key === 'Escape') closeViewer()
@@ -421,7 +447,8 @@ $('sort').onchange = () => {
 }
 async function doLogout() {
   if (!confirm('Abmelden und alle gespeicherten Dateien auf diesem Gerät löschen?')) return
-  // stop work that would refill the caches
+  // stop work that would refill the caches; the queue goes with the logout
+  scores.activate(null)
   queue.length = 0
   observer.disconnect()
   ctrl?.abort()
