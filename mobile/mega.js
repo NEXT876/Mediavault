@@ -1,5 +1,5 @@
 import { Storage } from 'https://cdn.jsdelivr.net/npm/megajs@1.3.9/dist/main.browser-es.mjs'
-import { UPLOAD_FOLDER, mediaKind, mimeType, uniqueName } from './logic.js'
+import { DATA_DIR, UPLOAD_FOLDER, mediaKind, mimeType, uniqueName } from './logic.js'
 
 const THUMB_EDGE = 300
 let persisted = false
@@ -152,4 +152,40 @@ export async function upload(folder, file, onProgress) {
   await cachePut('mv-files', './f/' + node.nodeId, new Blob([file], { type: mimeType(name) }), gen)
   await makeThumb(node, file).catch(() => {}) // a failed thumbnail must not fail a finished upload
   return node
+}
+
+const CHANGES_DIR = 'changes'
+const childDir = (node, name) => node.children?.find(n => n.directory && n.name === name)
+
+// Nearest of folder and its ancestors with _MediaVault/phone.json (newest one if MEGA kept duplicates).
+export function findLibrary(folder) {
+  for (let root = folder; root; root = root.parent) {
+    const dataDir = childDir(root, DATA_DIR)
+    const exportNode = (dataDir?.children ?? [])
+      .filter(n => !n.directory && n.name === 'phone.json')
+      .sort((a, b) => b.timestamp - a.timestamp)[0]
+    if (exportNode) return { root, dataDir, exportNode }
+  }
+  return null
+}
+
+export async function loadExport(exportNode) {
+  try {
+    return JSON.parse(new TextDecoder().decode(await exportNode.downloadBuffer({})))
+  } catch {
+    return null
+  }
+}
+
+export const changeNames = dataDir => new Set((childDir(dataDir, CHANGES_DIR)?.children ?? []).map(n => n.name))
+
+// Writes a new change file the PC applies later; returns its name.
+export async function uploadChanges(dataDir, events) {
+  const dir = childDir(dataDir, CHANGES_DIR) ?? await dataDir.mkdir(CHANGES_DIR)
+  const hex = Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2, '0')).join('')
+  const name = `${Date.now()}-${hex}.json`
+  const body = new TextEncoder().encode(JSON.stringify({ version: 1, events: events.map(e => ({ ...e, at: Math.round(e.at * 1000) / 1000 })) }))
+  const up = dir.upload({ name, size: body.length }, body)
+  await new Promise((res, rej) => { up.on?.('error', rej); up.complete.then(res, rej) })
+  return name
 }

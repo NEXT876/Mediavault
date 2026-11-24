@@ -1,6 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mediaKind, mimeType, collectMedia, listFolders, sortEntries, uniqueName, isNetworkError } from './logic.js'
+import {
+  mediaKind, mimeType, collectMedia, listFolders, sortEntries, uniqueName, isNetworkError,
+  DATA_DIR, relPath, applyEvents, scoreTier, smartWeight, pickRandom, targetAngle,
+} from './logic.js'
 
 test('mediaKind', () => {
   assert.equal(mediaKind('A.JPG'), 'image')
@@ -50,4 +53,78 @@ test('isNetworkError only matches fetch failures', () => {
   assert.equal(isNetworkError(new TypeError('Failed to fetch')), true)
   assert.equal(isNetworkError(new TypeError("undefined is not an object (evaluating 'r.ok.reduce')")), false)
   assert.equal(isNetworkError(new Error('Load failed')), false)
+})
+
+test('collectMedia and listFolders hide the data folder', () => {
+  const root = { children: [
+    { name: DATA_DIR, directory: true, children: [{ name: 'x.jpg', directory: false }] },
+    { name: 'a', directory: true, children: [{ name: 'b.jpg', directory: false }] },
+  ] }
+  assert.deepEqual(collectMedia(root).map(n => n.name), ['b.jpg'])
+  assert.deepEqual(listFolders(root).map(f => f.path), ['a'])
+})
+test('relPath joins names below the root or returns null', () => {
+  const root = { name: 'Bib' }
+  const sub = { name: 'Vom Handy', parent: root }
+  const file = { name: 'a.jpg', parent: sub }
+  assert.equal(relPath(file, root), 'Vom Handy/a.jpg')
+  assert.equal(relPath({ name: 'x', parent: { name: 'other', parent: {} } }, root), null)
+  assert.equal(relPath({ name: 'x' }, root), null)
+})
+const item = (score, watched = 0, last_watched = 0, ratings = 0) => ({ title: 't', type: 'image', score, group: '', watched, last_watched, ratings })
+test('applyEvents rate/set/view like the PC, input untouched', () => {
+  const items = { 'A/x.jpg': item(50, 2, 100, 1) }
+  const out = applyEvents(items, [
+    { path: 'a/X.JPG', kind: 'rate', value: 5, at: 200 },
+    { path: 'A/x.jpg', kind: 'view', at: 150 },
+    { path: 'nope.jpg', kind: 'view', at: 1 },
+  ])
+  assert.deepEqual(Object.keys(out), ['A/x.jpg'])
+  assert.deepEqual(out['A/x.jpg'], item(60, 4, 200, 2))
+  assert.deepEqual(items['A/x.jpg'], item(50, 2, 100, 1))
+})
+test('applyEvents clamps, orders by at (stable) and keeps last_watched maximal', () => {
+  const run = (score, events) => applyEvents({ p: item(score) }, events.map(e => ({ path: 'p', ...e }))).p
+  assert.equal(run(95, [{ kind: 'rate', value: 5, at: 1 }]).score, 100)
+  assert.equal(run(5, [{ kind: 'rate', value: 1, at: 1 }]).score, 1)
+  assert.equal(run(50, [{ kind: 'rate', value: 3, at: 1 }]).score, 50)
+  assert.equal(run(50, [{ kind: 'set', value: 100, at: 2 }, { kind: 'rate', value: 1, at: 1 }]).score, 100)
+  assert.equal(run(50, [{ kind: 'set', value: 7, at: 1 }, { kind: 'rate', value: 4, at: 1 }]).score, 12)
+  assert.equal(run(50, [{ kind: 'view', at: 9 }, { kind: 'view', at: 5 }]).last_watched, 9)
+  assert.equal(run(50, [{ kind: 'set', value: 80, at: 1 }]).watched, 0)
+})
+test('scoreTier boundaries', () => {
+  assert.deepEqual([100, 75, 74, 50, 49, 25, 24, 1].map(scoreTier),
+    ['high', 'high', 'mid', 'mid', 'low', 'low', 'bad', 'bad'])
+})
+test('smartWeight', () => {
+  const now = 1_000_000_000
+  assert.equal(smartWeight(undefined, now), 70)
+  assert.equal(smartWeight(item(80), now), 100)
+  assert.ok(Math.abs(smartWeight(item(80, 2), now) - 100 * 0.85 ** 2) < 1e-9)
+  assert.ok(Math.abs(smartWeight(item(80, 0, now - 3600), now) - 30) < 1e-9)
+  assert.ok(Math.abs(smartWeight(item(80, 0, now - 3 * 86400), now) - 60) < 1e-9)
+  assert.equal(smartWeight(item(80, 0, now - 8 * 86400), now), 100)
+  assert.equal(smartWeight(item(1, 40, now - 100), now), 1)
+})
+test('pickRandom uniform, weighted, recent and empty', () => {
+  const pool = ['a', 'b', 'c']
+  assert.equal(pickRandom([], null, []), null)
+  assert.equal(pickRandom(pool, null, [], () => 0), 'a')
+  assert.equal(pickRandom(pool, null, [], () => 0.99), 'c')
+  assert.equal(pickRandom(pool, null, ['a'], () => 0), 'b')
+  assert.equal(pickRandom(pool, null, pool, () => 0), 'a') // whole pool recent: ignore recent
+  const w = { a: 1, b: 1, c: 8 }
+  assert.equal(pickRandom(pool, x => w[x], [], () => 0.05), 'a')
+  assert.equal(pickRandom(pool, x => w[x], [], () => 0.15), 'b')
+  assert.equal(pickRandom(pool, x => w[x], [], () => 0.5), 'c')
+  assert.equal(pickRandom(pool, x => w[x], ['c'], () => 0.99), 'b')
+})
+test('targetAngle matches the PC wheel', () => {
+  // expected values from mediavault.extras.wheel.page.target_angle
+  assert.equal(targetAngle(10, 2, 8, 4), 1687.5)
+  assert.equal(targetAngle(0, 0, 5, 4), 1764)
+  assert.equal(targetAngle(123.5, 7, 8, 6), 2542.5)
+  assert.equal(targetAngle(700, 3, 3, 1), 1740) // too few turns: pushed past 3.2
+  assert.equal(targetAngle(50, 1, 2, 3.3), 1530)
 })
