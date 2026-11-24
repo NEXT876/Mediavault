@@ -490,7 +490,8 @@ $('sort').onchange = () => {
 async function doLogout() {
   if (!confirm('Abmelden und alle gespeicherten Dateien auf diesem Gerät löschen?')) return
   // stop work that would refill the caches
-  try { await scores.flush() } catch {} // best effort: the queue goes with the logout
+  // best effort, at most 5 s: a stalled upload must not block the logout (the queue goes with it)
+  await Promise.race([scores.flush().catch(() => {}), new Promise(r => setTimeout(r, 5000))])
   scores.activate(null)
   queue.length = 0
   observer.disconnect()
