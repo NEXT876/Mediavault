@@ -69,6 +69,8 @@ grid into a shortlist.
   while the stick is unplugged
 - Works on top of `rclone mount` without downloading whole videos
   (see [Cloud storage](#cloud-storage-with-rclone))
+- A phone viewer (installable web app) for libraries synced to MEGA, with
+  upload from the phone (see [Phone viewer](#phone-viewer))
 
 **Extensible**
 - Import sources are plugins: drop a folder into `plugins/` and it shows up
@@ -197,6 +199,24 @@ rclone mount remote:Media ~/Cloud --vfs-cache-mode full --vfs-cache-max-size 20G
   download far more; turn those off for network or FUSE folders
 - After the first scan, `du -sh ~/.cache/rclone/vfs` shows how much was
   actually downloaded
+
+## Phone viewer
+
+Browse a library's images and videos on an iPhone, open them fullscreen, and
+upload photos and videos from the phone into a `Vom Handy` subfolder.
+
+1. Install the MEGA desktop app and sync the existing library folder with a
+   MEGA folder. Do not move the files: local configs store absolute paths, so
+   moved files would lose their ratings.
+2. On the iPhone, open <https://next876.github.io/Mediavault/mobile/> in
+   Safari, tap Share, then Add to Home Screen, and start it from there.
+3. Sign in with the MEGA account and enter the folder name.
+
+- Only configs whose folder is synced with MEGA are visible on the phone.
+- Uploads appear on the PC once the MEGA app has synced, the next time
+  MediaVault starts (AI-mode configs only sync on request).
+- The password is never stored on the phone, only the session. "Abmelden"
+  removes the session and all cached files.
 
 ## Project structure
 
