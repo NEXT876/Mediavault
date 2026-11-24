@@ -28,7 +28,7 @@ export function findFolder(nodes, name, root) {
   const depth = n => { let d = 0; for (let p = n; p; p = p.parent, d++) if (p === root) return d; return -1 }
   let best = null, bestDepth = Infinity
   for (const n of nodes) {
-    if (!n.directory || n.name.trim().toLowerCase() !== want) continue
+    if (!n.directory || (n.name ?? '').trim().toLowerCase() !== want) continue
     const d = depth(n)
     if (d >= 0 && d < bestDepth) [best, bestDepth] = [n, d]
   }
@@ -50,3 +50,7 @@ export function uniqueName(name, taken) {
   taken.add(pick.toLowerCase())
   return pick
 }
+
+// fetch() rejects with a TypeError whose text differs per browser; other TypeErrors are bugs, not offline
+export const isNetworkError = e =>
+  e instanceof TypeError && /load failed|failed to fetch|networkerror|network connection/i.test(e.message)

@@ -18,6 +18,8 @@
   section { padding:16px; }
   h1 { font-size:20px; margin:0 0 12px; }
   input, button { font:inherit; width:100%; padding:12px; margin:4px 0; border-radius:8px; border:1px solid #444; background:#222; color:var(--fg); }
+  .check { display:flex; align-items:center; gap:8px; margin:4px 0; color:var(--mut); }
+  .check input { width:auto; margin:0; }
   button { background:var(--acc); color:#000; border:0; font-weight:600; }
   button.sec { background:#333; color:var(--fg); }
   .msg { color:var(--bad); min-height:1.4em; }
@@ -51,6 +53,7 @@
 <section id="s-start" class="mut">Lade …</section>
 <section id="s-offline" hidden>
   <p>Keine Verbindung.</p>
+  <p class="msg" id="offline-msg"></p>
   <button id="retry">Erneut versuchen</button>
   <button id="offline-logout" class="sec">Abmelden</button>
 </section>
@@ -59,6 +62,7 @@
   <form id="login-form">
     <input id="email" type="email" placeholder="E-Mail" autocomplete="username" required>
     <input id="password" type="password" placeholder="Passwort" autocomplete="current-password" required>
+    <label class="check"><input id="show-pw" type="checkbox"> Passwort anzeigen</label>
     <input id="code" type="text" inputmode="numeric" placeholder="2FA-Code (optional)" autocomplete="one-time-code">
     <button type="submit">Anmelden</button>
   </form>

@@ -1,5 +1,5 @@
 import { login, restoreSession, logout, getFile, cachedThumb, makeThumb, upload, epoch } from './mega.js'
-import { mediaKind, collectMedia, findFolder, sortEntries } from './logic.js'
+import { mediaKind, collectMedia, findFolder, sortEntries, isNetworkError } from './logic.js'
 
 const $ = id => document.getElementById(id)
 const store = {
@@ -18,7 +18,8 @@ async function start() {
   show('s-start')
   try {
     state.storage = await restoreSession()
-  } catch {
+  } catch (err) {
+    $('offline-msg').textContent = isNetworkError(err) ? '' : `Fehler: ${err?.message || err}`
     show('s-offline')
     return
   }
@@ -242,11 +243,12 @@ document.addEventListener('keydown', e => {
 $('retry').onclick = start
 function loginError(err) {
   const m = err?.message || String(err)
-  if (err instanceof TypeError) return 'Keine Verbindung.'
+  if (isNetworkError(err)) return 'Keine Verbindung.'
   if (/ENOENT|EKEY|invalid/i.test(m)) return 'E-Mail oder Passwort falsch.'
   if (/EMFAREQUIRED/.test(m)) return 'Bitte 2FA-Code eingeben.'
   return m
 }
+$('show-pw').onchange = e => { $('password').type = e.target.checked ? 'text' : 'password' }
 $('login-form').onsubmit = async e => {
   e.preventDefault()
   $('login-msg').textContent = ''

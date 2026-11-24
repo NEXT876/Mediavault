@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mediaKind, mimeType, collectMedia, findFolder, sortEntries, uniqueName } from './logic.js'
+import { mediaKind, mimeType, collectMedia, findFolder, sortEntries, uniqueName, isNetworkError } from './logic.js'
 
 test('mediaKind', () => {
   assert.equal(mediaKind('A.JPG'), 'image')
@@ -24,6 +24,7 @@ test('findFolder ignores case and spaces, only looks under root, prefers the sha
   assert.equal(findFolder([trashed, deep], 'bib', root), deep)
   assert.equal(findFolder([trashed], 'bib', root), null)
   assert.equal(findFolder([top, { name: 'bib', directory: false, parent: root }], 'fehlt', root), null)
+  assert.equal(findFolder([mk(null, root), top], 'bib', root), top) // undecryptable names do not crash
 })
 test('sortEntries by date (newest first) and by name (numeric)', () => {
   const n = [{ name: 'b10.jpg', timestamp: 1 }, { name: 'b2.jpg', timestamp: 3 }, { name: 'a.jpg', timestamp: 2 }]
@@ -41,4 +42,10 @@ test('mimeType', () => {
   assert.equal(mimeType('b.MOV'), 'video/quicktime')
   assert.equal(mimeType('c.xyz'), 'application/octet-stream')
   assert.equal(mimeType('x.constructor'), 'application/octet-stream')
+})
+test('isNetworkError only matches fetch failures', () => {
+  assert.equal(isNetworkError(new TypeError('Load failed')), true)
+  assert.equal(isNetworkError(new TypeError('Failed to fetch')), true)
+  assert.equal(isNetworkError(new TypeError("undefined is not an object (evaluating 'r.ok.reduce')")), false)
+  assert.equal(isNetworkError(new Error('Load failed')), false)
 })
