@@ -85,7 +85,7 @@ export function initWheel({ getExport, toast }) {
     const key = `${R}|${c.font}|${entries.join('\n')}`
     if (lay?.key !== key) lay = { key, labels: entries.map(e => elide(c, e, Math.max(20, R - 18 - hubRadius(R) - 16))) }
     for (let i = 0; i < n; i++) {
-      const mid = (i + 0.5) * 360 / n, left = labelFlipped(mid)
+      const mid = (i + 0.5) * 360 / n, left = labelFlipped(Math.round((((mid + angle) % 360) + 360) % 360 * 1e6) / 1e6) // the angle on screen decides, not the one on the wheel
       c.save()
       c.rotate((left ? mid + 90 : mid - 90) * RAD)
       c.fillStyle = contrastColor(colorOf(i))
