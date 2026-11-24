@@ -24,6 +24,7 @@
   .mut { color:var(--mut); }
   header { display:flex; gap:8px; align-items:center; padding:8px 12px; position:sticky; top:0; background:var(--bg); z-index:1; }
   header button { width:auto; margin:0; padding:8px 12px; }
+  header button:disabled { opacity:.5; }
   header .sp { flex:1; }
   .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:2px; }
   .tile { all:unset; position:relative; aspect-ratio:1; background:#222; overflow:hidden; display:block; cursor:pointer; }
@@ -39,6 +40,10 @@
   #vprog::-webkit-progress-bar { background:#333; }
   #vprog::-webkit-progress-value { background:#eee; }
   #vprog::-moz-progress-bar { background:#eee; }
+  #uprog { display:block; width:100%; height:4px; appearance:none; border:0; background:#333; }
+  #uprog::-webkit-progress-bar { background:#333; }
+  #uprog::-webkit-progress-value { background:#eee; }
+  #uprog::-moz-progress-bar { background:#eee; }
   #vmsg { position:absolute; color:var(--bad); padding:16px; text-align:center; }
 </style>
 </head>
@@ -70,9 +75,12 @@
   <header>
     <button id="sort" class="sec" aria-label="Sortierung umschalten"></button>
     <span class="sp"></span>
-    <button id="upload" hidden>Hochladen</button>
+    <button id="upload">Hochladen</button>
     <button id="logout" class="sec">Abmelden</button>
   </header>
+  <progress id="uprog" max="1" value="0" hidden></progress>
+  <p id="up-msg" class="mut" style="padding:0 16px" hidden></p>
+  <input id="pick" type="file" accept="image/*,video/*" multiple hidden>
   <p id="lib-msg" class="mut" style="padding:0 16px" hidden></p>
   <button id="change-folder" class="sec" style="margin:0 16px;width:calc(100% - 32px)" hidden>Ordner ändern</button>
   <div class="grid" id="grid"></div>

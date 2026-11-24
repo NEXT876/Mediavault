@@ -1,4 +1,4 @@
-import { login, restoreSession, logout, getFile, cachedThumb, makeThumb } from './mega.js'
+import { login, restoreSession, logout, getFile, cachedThumb, makeThumb, upload } from './mega.js'
 import { mediaKind, collectMedia, findFolder, sortEntries } from './logic.js'
 
 const $ = id => document.getElementById(id)
@@ -116,6 +116,37 @@ function renderGrid() {
     observer.observe(tile)
     return tile
   }))
+}
+
+// ---- upload ----
+$('upload').onclick = () => $('pick').click()
+$('pick').onchange = async () => {
+  const files = [...$('pick').files]
+  $('pick').value = ''
+  if (!files.length) return
+  const ok = files.filter(f => mediaKind(f.name))
+  const skipped = files.filter(f => !mediaKind(f.name)).map(f => f.name)
+  const failed = []
+  const msg = $('up-msg'), prog = $('uprog')
+  $('upload').disabled = true
+  msg.hidden = prog.hidden = false
+  for (const [i, f] of ok.entries()) {
+    msg.textContent = `Lade hoch ${i + 1}/${ok.length} …`
+    prog.value = 0
+    try {
+      await upload(state.folder, f, (l, t) => { prog.value = t ? l / t : 0 })
+    } catch {
+      failed.push(f.name)
+    }
+  }
+  prog.hidden = true
+  $('upload').disabled = false
+  const parts = []
+  if (skipped.length) parts.push(`Übersprungen (Format kennt MediaVault nicht): ${skipped.join(', ')}`)
+  if (failed.length) parts.push(`Fehlgeschlagen: ${failed.join(', ')}`)
+  msg.textContent = parts.join('. ')
+  msg.hidden = !parts.length
+  renderGrid()
 }
 
 // ---- viewer ----
