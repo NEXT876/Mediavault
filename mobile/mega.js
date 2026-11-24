@@ -67,7 +67,7 @@ export async function getFile(node, onProgress, signal) {
   const gen = generation
   const key = './f/' + node.nodeId
   const cached = await cacheGet('mv-files', key)
-  if (cached) return cached
+  if (cached) { cached.fromCache = true; return cached } // DIAG: temporary, for the iOS video bug
   const aborted = () => new DOMException('Aborted', 'AbortError')
   if (signal?.aborted) throw aborted()
   const blob = await new Promise((resolve, reject) => {

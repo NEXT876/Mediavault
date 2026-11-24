@@ -199,7 +199,14 @@ async function openViewer(i) {
       el.controls = true
       el.playsInline = true
       el.preload = 'auto'
-      el.onerror = () => { if (!el.isConnected) return; $('vmsg').textContent = 'Dieses Format kann das iPhone nicht abspielen.'; $('vmsg').hidden = false }
+      el.onerror = async () => {
+        if (!el.isConnected) return
+        // DIAG: temporary details for the iOS video bug
+        const head = [...new Uint8Array(await blob.slice(0, 12).arrayBuffer())].map(b => b.toString(16).padStart(2, '0')).join(' ')
+        $('vmsg').textContent = 'Dieses Format kann das iPhone nicht abspielen.\n' +
+          `[code ${el.error?.code} ${el.error?.message || ''} | Blob ${blob.size}/${node.size} B, ${blob.type || 'kein Typ'}, Cache ${blob.fromCache ? 'ja' : 'nein'} | ${head}]`
+        $('vmsg').hidden = false
+      }
     } else {
       el = new Image()
       el.alt = node.name
