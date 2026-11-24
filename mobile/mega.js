@@ -25,7 +25,8 @@ export async function restoreSession() {
     await storage.reload(true)
     persistOnce()
     return storage
-  } catch {
+  } catch (e) {
+    if (e instanceof TypeError) throw e // offline (fetch TypeError): keep the session, UI shows "Keine Verbindung"
     localStorage.removeItem('mv-session')
     return null
   }
@@ -43,7 +44,11 @@ async function cacheGet(cacheName, key) {
 }
 
 async function cachePut(cacheName, key, blob) {
-  await (await caches.open(cacheName)).put(key, new Response(blob, { headers: { 'Content-Type': blob.type } }))
+  try { // caching is only an optimization (iOS may throw QuotaExceededError)
+    await (await caches.open(cacheName)).put(key, new Response(blob, { headers: { 'Content-Type': blob.type } }))
+  } catch (e) {
+    console.warn('cache write failed', e)
+  }
 }
 
 // shortcut: whole video is held in memory; stream via partial downloads only if big videos cause trouble.
@@ -75,16 +80,25 @@ async function drawable(node, blob) {
   video.muted = true
   video.playsInline = true
   video.preload = 'auto'
+  let timer
   try {
     await new Promise((resolve, reject) => {
+      timer = setTimeout(() => reject(new Error('video thumbnail timeout')), 10000)
       video.onerror = () => reject(new Error('video load failed'))
-      video.onloadedmetadata = () => { video.currentTime = Math.min(2, video.duration / 2) }
+      video.onloadedmetadata = () => {
+        try {
+          video.currentTime = Number.isFinite(video.duration) ? Math.min(2, video.duration / 2) : 0
+        } catch (e) { reject(e) }
+      }
       video.onseeked = resolve
       video.src = url
     })
+    if (!video.videoWidth || !video.videoHeight) throw new Error('video has no frame')
   } catch (e) {
     URL.revokeObjectURL(url)
     throw e
+  } finally {
+    clearTimeout(timer)
   }
   return { source: video, w: video.videoWidth, h: video.videoHeight, done: () => URL.revokeObjectURL(url) }
 }
@@ -98,6 +112,7 @@ export async function makeThumb(node, blob) {
     canvas.height = Math.max(1, Math.round(d.h * scale))
     canvas.getContext('2d').drawImage(d.source, 0, 0, canvas.width, canvas.height)
     const thumb = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.8))
+    if (!thumb) throw new Error('thumbnail encoding failed')
     await cachePut('mv-thumbs', './t/' + node.nodeId, thumb)
     return thumb
   } finally {
