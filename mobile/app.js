@@ -138,8 +138,9 @@ async function startRandom(mode) {
 }
 
 function renderMore() {
-  const data = state.lib === undefined ? 'wird geladen …' : state.lib ? 'MediaVault-Config gefunden' : 'keine MediaVault-Daten in diesem Ordner'
-  $('more-info').textContent = `Theme: ${THEMES[document.documentElement.dataset.theme]} · Daten: ${data}`
+  $('more-info').textContent = state.lib === undefined ? 'Wird geladen …'
+    : state.lib ? `Mit MediaVault verbunden · Theme vom PC: ${THEMES[document.documentElement.dataset.theme]}`
+    : 'Dieser Ordner gehört zu keiner MediaVault-Config. Score, Smart-Zufall und Gruppen sind hier aus.'
 }
 
 $('s-lib').onclick = e => {
