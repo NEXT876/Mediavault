@@ -202,8 +202,11 @@ rclone mount remote:Media ~/Cloud --vfs-cache-mode full --vfs-cache-max-size 20G
 
 ## Phone viewer
 
-Browse a library's images and videos on an iPhone, open them fullscreen, and
-upload photos and videos from the phone into a `Vom Handy` subfolder.
+An installable web app for iPhone and iPad in the look of the desktop app:
+browse a library's images and videos, open them fullscreen, see and set
+scores (rating 1–5 or an exact score), pick at random (Normal, Smart, Alles,
+Alles Smart, Aus Gruppen), spin the wheel of fortune with the saved wheel
+lists and groups, and upload photos and videos into a `Vom Handy` subfolder.
 
 1. Install the MEGA desktop app and sync the existing library folder with a
    MEGA folder. Do not move the files: local configs store absolute paths, so
@@ -220,6 +223,14 @@ upload photos and videos from the phone into a `Vom Handy` subfolder.
   removes the session and all cached files.
 - The stored session gives full access to the MEGA account: treat the phone
   like a logged-in MEGA app. "Abmelden" ends it.
+- MediaVault writes the library's scores, groups, wheel lists and theme to
+  `_MediaVault/phone.json` in the library folder (no leading dot, so the MEGA
+  app syncs it). The phone never changes that file; every rating or viewing
+  on the phone becomes a new small file in `_MediaVault/changes/`, which
+  MediaVault applies the next time it starts (or switches to the config) and
+  then deletes. Ratings from phone and PC therefore never overwrite each other.
+- Only files MediaVault already knows show a score on the phone; a photo
+  uploaded from the phone can be rated after the next MediaVault start.
 
 ## Project structure
 
