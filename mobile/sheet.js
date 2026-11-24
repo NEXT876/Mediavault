@@ -40,7 +40,10 @@ export function chooseGroups({ title, groups, types = false, actions }) {
     kids.push(acts)
     dlg.replaceChildren(...kids)
     dlg.onclose = () => resolve(result)
-    dlg.onclick = e => { if (e.target === dlg) dlg.close() } // a tap on the backdrop
+    dlg.onclick = e => { // a tap on the backdrop: the click target is the dialog itself, so check the point against its box
+      const r = dlg.getBoundingClientRect()
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dlg.close()
+    }
     dlg.showModal()
   })
 }

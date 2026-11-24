@@ -13,6 +13,7 @@ export const reset = () => { recent = []; sess = null } // folder changed
 function draw() {
   const node = pickRandom(sess.pool, sess.weightOf, recent)
   recent = [...recent.filter(n => n !== node), node].slice(-RECENT_PICKS)
+  sess.history.length = sess.pos + 1 // a new pick after going back drops the forward history
   sess.history.push(node)
   sess.pos = sess.history.length - 1
   return node
@@ -21,7 +22,10 @@ function draw() {
 // spec: { kinds: ['image'|'video'], groups?: [names], smart }. Returns the first pick, or null (pool empty, no session).
 export function begin(folder, { kinds, groups = null, smart }) {
   const pool = randomPool(collectMedia(folder), { kinds, groups }, scores.item)
-  if (!pool.length) return sess = null
+  if (!pool.length) {
+    sess = null
+    return null
+  }
   // without MediaVault data scores.item is null and every weight is equal, so smart behaves like normal
   sess = { pool, weightOf: smart ? n => smartWeight(scores.item(n), Date.now() / 1000) : null, history: [], pos: -1 }
   return draw()
