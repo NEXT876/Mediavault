@@ -141,16 +141,16 @@
     padding:32px max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     background:linear-gradient(transparent, rgba(0,0,0,.75)); }
   #rate { max-width:480px; margin:0 auto 8px; padding:10px; border-radius:12px; text-align:center; background:rgba(0,0,0,.55); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
-  #rstats { margin:0 0 8px; font-size:14px; }
-  #rbtns, #rform { display:flex; gap:8px; }
+  #rstats { margin:0 0 8px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #rrow, #rbtns, #rform { display:flex; gap:8px; }
+  #rbtns { flex:1; }
   #rate button, #rval { flex:1; min-width:44px; min-height:44px; border-radius:8px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.14); color:#fff; font-size:16px; }
   #rbtns button { font-weight:600; transition:background .2s; }
   #rbtns button.ok { background:var(--pfill); border-color:var(--primary); }
-  #rset { width:100%; margin-top:8px; }
-  #rform { margin-top:8px; }
   #rform button { flex:0 0 auto; padding:0 16px; }
   #rval { flex:1 1 0; min-width:0; padding:0 12px; text-align:center; background:rgba(0,0,0,.5); }
-  @media (max-height:500px) { #rstats { margin-bottom:4px; } #rset, #rform { margin-top:4px; } #vfoot { padding-top:16px; } }
+  #rate #rset { flex:0 0 48px; min-width:44px; font-size:18px; line-height:1; display:flex; align-items:center; justify-content:center; }
+  @media (max-height:500px) { #rstats { display:none; } #rate { padding:6px; margin-bottom:4px; } #vfoot { padding-top:8px; } }
   #vbar .row { display:flex; align-items:center; gap:10px; }
   #vbar .row + .row { justify-content:center; gap:28px; margin-top:4px; }
   #vbar span { font-size:13px; font-variant-numeric:tabular-nums; min-width:3.2em; }
@@ -263,8 +263,7 @@
   <div id="vfoot">
     <div id="rate" hidden>
       <p id="rstats" aria-live="polite"></p>
-      <div id="rbtns"></div>
-      <button id="rset">Score setzen</button>
+      <div id="rrow"><div id="rbtns"></div><button id="rset" aria-label="Score setzen">✎&#xFE0E;</button></div>
       <form id="rform" hidden>
         <input id="rval" type="number" inputmode="numeric" min="1" max="100" step="1" required aria-label="Score (1–100)">
         <button type="submit">OK</button>

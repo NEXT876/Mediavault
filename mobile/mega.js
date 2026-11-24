@@ -180,11 +180,14 @@ export async function loadExport(exportNode) {
 
 export const changeNames = dataDir => new Set((childDir(dataDir, CHANGES_DIR)?.children ?? []).map(n => n.name))
 
-// Writes a new change file the PC applies later; returns its name.
-export async function uploadChanges(dataDir, events) {
-  const dir = childDir(dataDir, CHANGES_DIR) ?? await dataDir.mkdir(CHANGES_DIR)
+export function newChangeName() {
   const hex = Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2, '0')).join('')
-  const name = `${Date.now()}-${hex}.json`
+  return `${Date.now()}-${hex}.json`
+}
+
+// Writes a change file the PC applies later; returns its name. The caller reserves `name` first so a retry reuses it.
+export async function uploadChanges(dataDir, events, name = newChangeName()) {
+  const dir = childDir(dataDir, CHANGES_DIR) ?? await dataDir.mkdir(CHANGES_DIR)
   const body = new TextEncoder().encode(JSON.stringify({ version: 1, events: events.map(e => ({ ...e, at: Math.round(e.at * 1000) / 1000 })) }))
   const up = dir.upload({ name, size: body.length }, body)
   await new Promise((res, rej) => { up.on?.('error', rej); up.complete.then(res, rej) })

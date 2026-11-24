@@ -15,7 +15,7 @@ $('rbtns').replaceChildren(...Object.entries(DELTA).map(([r, d]) => {
 
 function closeForm() {
   $('rform').hidden = true
-  $('rset').hidden = false
+  $('rrow').hidden = false
 }
 
 export function render() {
@@ -42,7 +42,7 @@ $('rbtns').onclick = e => {
   setTimeout(() => btn.classList.remove('ok'), 500)
 }
 $('rset').onclick = () => {
-  $('rset').hidden = true
+  $('rrow').hidden = true
   $('rform').hidden = false
   $('rval').value = scores.item(node).score
   $('rval').focus()

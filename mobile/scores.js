@@ -1,6 +1,6 @@
 // The phone's view of scores: export items + events not yet applied by the PC, and the outgoing change queue.
 import { applyEvents, relPath, mediaKind } from './logic.js'
-import { uploadChanges, epoch } from './mega.js'
+import { uploadChanges, newChangeName, changeNames, epoch } from './mega.js'
 
 const FLUSH_DELAY = 20000
 const read = k => { try { const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : [] } catch { return [] } }
@@ -8,7 +8,8 @@ const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } cat
 const stem = name => name.replace(/\.[^.]+$/, '')
 
 // null without MediaVault data (or without a loaded export); else
-// { lib, qKey, sKey, queue: events not uploaded, sent: [{ name, events }] not yet applied by the PC, keys, timer, busy }
+// { lib, qKey, sKey, queue: events not in a batch yet, sent: [{ name, events, pending? }] batches not yet applied by the PC
+// (pending = name reserved, upload not confirmed), keys, timer, busy }
 let S = null
 let listener = null
 const cache = new Map() // node -> current item, dropped per node on record()
@@ -26,9 +27,11 @@ export function activate(lib) {
   S = { lib, qKey: 'mv-queue:' + id, sKey: 'mv-sent:' + id, timer: 0, busy: false,
     keys: new Map(Object.keys(items).map(k => [k.toLowerCase(), k])) }
   S.queue = read(S.qKey)
-  S.sent = read(S.sKey).filter(b => !applied.has(b.name)) // the export already contains those
+  const uploaded = changeNames(lib.dataDir)
+  // the export already contains applied batches; a confirmed batch that is neither applied nor on MEGA was rejected by the PC
+  S.sent = read(S.sKey).filter(b => !applied.has(b.name) && (b.pending || uploaded.has(b.name)))
   write(S.sKey, S.sent)
-  if (S.queue.length) schedule(S) // left over from an earlier run
+  if (S.queue.length || S.sent.some(b => b.pending)) schedule(S) // left over from an earlier run
 }
 
 const exportItem = node => {
@@ -72,25 +75,33 @@ export function record(node, kind, value) {
 
 const schedule = s => { clearTimeout(s.timer); s.timer = setTimeout(flush, FLUSH_DELAY) }
 
-// Uploads the queue as one change file; on failure the queue stays and is retried later.
+// Uploads the queue as one change file. The batch (with its name) is stored before the network call, so a retry after
+// a crash or a failed-looking upload reuses the name instead of sending the events twice; on failure it is retried later.
 export async function flush() {
   const s = S
-  if (!s || s.busy || !s.queue.length) return
-  clearTimeout(s.timer)
-  s.busy = true
-  const events = [...s.queue], gen = epoch()
-  try {
-    const name = await uploadChanges(s.lib.dataDir, events)
-    if (gen !== epoch()) return // logged out meanwhile: the stored data is gone
-    s.queue = s.queue.slice(events.length) // events recorded during the upload stay queued
-    s.sent.push({ name, events })
+  if (!s || s.busy) return
+  let batch = s.sent.find(b => b.pending)
+  if (!batch) {
+    if (!s.queue.length) return
+    batch = { name: newChangeName(), events: s.queue, pending: true }
+    s.sent.push(batch)
+    s.queue = []
     write(s.sKey, s.sent)
     write(s.qKey, s.queue)
+  }
+  clearTimeout(s.timer)
+  s.busy = true
+  const gen = epoch()
+  try {
+    if (!changeNames(s.lib.dataDir).has(batch.name)) await uploadChanges(s.lib.dataDir, batch.events, batch.name)
+    if (gen !== epoch()) return // logged out meanwhile: the stored data is gone
+    delete batch.pending
+    write(s.sKey, s.sent)
   } catch (e) {
     console.warn('uploading changes failed', e)
   } finally {
     s.busy = false
-    if (S === s && s.queue.length) schedule(s)
+    if (S === s && (s.queue.length || batch.pending)) schedule(s)
   }
 }
 
