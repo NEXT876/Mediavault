@@ -188,7 +188,9 @@ async function openViewer(i) {
   $('viewer').hidden = false
   $('vmsg').hidden = true
   chrome(true)
-  $('loop').hidden = mediaKind(node.name) !== 'video'
+  $('vbar').hidden = mediaKind(node.name) !== 'video'
+  $('vseek').value = 0
+  $('vtime').textContent = $('vdur').textContent = '0:00'
   $('vprog').hidden = false
   $('vprog').value = 0
   try {
@@ -198,10 +200,10 @@ async function openViewer(i) {
     let el
     if (mediaKind(node.name) === 'video') {
       el = document.createElement('video')
-      el.controls = true
-      el.playsInline = true
+      el.playsInline = true // own control bar (#vbar) instead of the iOS one
       el.loop = store.get('mv-loop') === '1' // native loop restarts without a gap
-      el.onplay = el.onpause = () => chrome(true)
+      el.onplay = el.onpause = () => { chrome(true); syncBar() }
+      el.ontimeupdate = syncBar
       el.preload = 'auto'
       el.onerror = () => { if (!el.isConnected) return; $('vmsg').textContent = 'Dieses Format kann das iPhone nicht abspielen.'; $('vmsg').hidden = false }
     } else {
@@ -210,7 +212,7 @@ async function openViewer(i) {
     }
     // a tiny seek makes iOS paint the first frame instead of a black box before play is tapped
     // (a '#t=' fragment on the blob URL breaks loading in Safari)
-    if (el.tagName === 'VIDEO') el.onloadedmetadata = () => { el.currentTime = 0.001 }
+    if (el.tagName === 'VIDEO') el.onloadedmetadata = () => { el.currentTime = 0.001; syncBar() }
     el.src = viewUrl
     $('vmedia').replaceChildren(el)
     $('vprog').hidden = true
@@ -237,7 +239,34 @@ function closeViewer() {
   $('viewer').hidden = true
 }
 
-// Close and loop buttons mimic the iOS video bar: hidden 3 s into playback, a tap toggles them, paused keeps them.
+// ---- video bar ----
+const video = () => $('vmedia').querySelector('video')
+const fmt = t => Number.isFinite(t) ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}` : '0:00'
+let scrubbing = false
+function syncBar() {
+  const v = video()
+  if (!v) return
+  $('vplay').textContent = v.paused ? '▶\uFE0E' : '❚❚'
+  $('vplay').setAttribute('aria-label', v.paused ? 'Abspielen' : 'Pause')
+  $('vtime').textContent = fmt(v.currentTime)
+  $('vdur').textContent = fmt(v.duration)
+  if (!scrubbing) $('vseek').value = v.duration ? Math.round(v.currentTime / v.duration * 1000) : 0
+  $('vseek').style.setProperty('--p', $('vseek').value / 10 + '%')
+}
+$('vplay').onclick = () => { const v = video(); if (v) v.paused ? v.play().catch(() => {}) : v.pause() }
+const skip = d => { const v = video(); if (v?.duration) v.currentTime = Math.min(Math.max(0, v.currentTime + d), v.duration) }
+$('vback').onclick = () => skip(-10)
+$('vfwd').onclick = () => skip(10)
+$('vseek').oninput = () => {
+  const v = video()
+  scrubbing = true
+  if (v?.duration) v.currentTime = $('vseek').value / 1000 * v.duration
+  chrome(true)
+  syncBar()
+}
+$('vseek').onchange = () => { scrubbing = false }
+
+// Close button and video bar hide 3 s into playback; a tap on the video toggles them, paused keeps them shown.
 let idleTimer
 function chrome(show) {
   clearTimeout(idleTimer)
@@ -250,10 +279,10 @@ $('viewer').addEventListener('touchstart', e => { tap = e.changedTouches[0] }, {
 $('viewer').addEventListener('touchend', e => {
   const s = tap, t = e.changedTouches[0]
   tap = null
-  if (!s || e.target.closest('button') || !$('vmedia').querySelector('video')) return
-  if (Math.hypot(t.clientX - s.clientX, t.clientY - s.clientY) > 10) return
-  // taps on the native control bar keep everything shown; elsewhere a tap toggles like iOS does
-  chrome(s.clientY > innerHeight - 120 || $('viewer').classList.contains('idle'))
+  if (!s || !video()) return
+  if (e.target.closest('#vbar')) return chrome(true) // using the bar keeps it shown
+  if (e.target.closest('button') || Math.hypot(t.clientX - s.clientX, t.clientY - s.clientY) > 10) return
+  chrome($('viewer').classList.contains('idle'))
 }, { passive: true })
 $('close').onclick = closeViewer
 const showLoop = () => $('loop').setAttribute('aria-pressed', String(store.get('mv-loop') === '1'))
@@ -265,7 +294,7 @@ $('loop').onclick = () => {
 }
 showLoop()
 let touch = null
-$('viewer').addEventListener('touchstart', e => { touch = (e.target.closest('video') && e.changedTouches[0].clientY > innerHeight - 120) ? null : e.changedTouches[0] }, { passive: true })
+$('viewer').addEventListener('touchstart', e => { touch = e.target.closest('#vbar') ? null : e.changedTouches[0] }, { passive: true })
 $('viewer').addEventListener('touchend', e => {
   if (!touch) return
   const dx = e.changedTouches[0].clientX - touch.clientX

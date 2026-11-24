@@ -39,12 +39,25 @@
   #viewer { position:fixed; inset:0; padding-bottom:env(safe-area-inset-bottom); background:#000; z-index:10; display:flex; align-items:center; justify-content:center; }
   #viewer img, #viewer video { width:100%; height:100%; object-fit:contain; }
   #close { position:absolute; top:max(12px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right));
-    width:44px; height:44px; padding:0; border-radius:22px; font-size:22px; background:#333; color:#fff; z-index:2; }
-  #loop { position:absolute; top:max(12px, env(safe-area-inset-top)); left:max(12px, env(safe-area-inset-left));
-    width:auto; height:44px; padding:0 14px; border-radius:22px; background:#333; color:#fff; z-index:2; font-weight:400; }
-  #close, #loop { transition:opacity .25s; }
-  #viewer.idle #close, #viewer.idle #loop { opacity:0; pointer-events:none; }
-  #loop[aria-pressed="true"] { background:var(--acc); color:#000; }
+    width:44px; height:44px; padding:0; border-radius:22px; font-size:20px; z-index:2;
+    background:rgba(0,0,0,.45); color:#fff; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+  #vbar { position:absolute; left:0; right:0; bottom:0; z-index:2; color:#fff;
+    padding:32px max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    background:linear-gradient(transparent, rgba(0,0,0,.75)); }
+  #vbar .row { display:flex; align-items:center; gap:10px; }
+  #vbar .row + .row { justify-content:center; gap:28px; margin-top:4px; }
+  #vbar span { font-size:13px; font-variant-numeric:tabular-nums; min-width:3.2em; }
+  #vbar span:last-child { text-align:right; }
+  #vbar button { width:44px; height:44px; padding:0; margin:0; border-radius:22px; background:none; color:#fff; font-weight:400; font-size:15px; }
+  #vplay { font-size:26px !important; }
+  #loop { font-size:22px !important; color:rgba(255,255,255,.55) !important; position:absolute; right:max(16px, env(safe-area-inset-right)); }
+  #loop[aria-pressed="true"] { color:var(--acc) !important; }
+  #vseek { flex:1; width:auto; margin:0; padding:0; height:28px; border:0; background:none; -webkit-appearance:none; appearance:none; }
+  #vseek::-webkit-slider-runnable-track { height:4px; border-radius:2px;
+    background:linear-gradient(to right, #fff var(--p, 0%), rgba(255,255,255,.35) var(--p, 0%)); }
+  #vseek::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; margin-top:-6px; border-radius:8px; background:#fff; }
+  #close, #vbar { transition:opacity .25s; }
+  #viewer.idle #close, #viewer.idle #vbar { opacity:0; pointer-events:none; }
   #vprog { position:absolute; left:0; right:0; bottom:0; height:4px; width:100%; appearance:none; border:0; background:#333; }
   #vprog::-webkit-progress-bar { background:#333; }
   #vprog::-webkit-progress-value { background:#eee; }
@@ -95,7 +108,15 @@
 </section>
 <div id="viewer" hidden>
   <button id="close" aria-label="Schließen">✕</button>
-  <button id="loop" aria-pressed="false" hidden>↻ Wiederholen</button>
+  <div id="vbar" hidden>
+    <div class="row"><span id="vtime">0:00</span><input id="vseek" type="range" min="0" max="1000" value="0" aria-label="Position"><span id="vdur">0:00</span></div>
+    <div class="row">
+      <button id="vback" aria-label="10 Sekunden zurück">−10</button>
+      <button id="vplay" aria-label="Abspielen">▶&#xFE0E;</button>
+      <button id="vfwd" aria-label="10 Sekunden vor">+10</button>
+      <button id="loop" aria-pressed="false" aria-label="Wiederholen">↻</button>
+    </div>
+  </div>
   <div id="vmedia" style="display:contents"></div>
   <progress id="vprog" max="1" value="0"></progress>
   <p id="vmsg" hidden></p>
