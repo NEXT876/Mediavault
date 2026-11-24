@@ -1,5 +1,5 @@
 // Wheel of fortune (Glücksrad), a port of mediavault/extras/wheel/page.py: canvas wheel, entries editor, result card.
-import { targetAngle, parseEntries, contrastColor, luminance } from './logic.js'
+import { targetAngle, parseEntries, contrastColor, luminance, labelFlipped } from './logic.js'
 import { chooseGroups } from './sheet.js'
 
 const $ = id => document.getElementById(id)
@@ -80,12 +80,12 @@ export function initWheel({ getExport, toast }) {
       c.fillStyle = 'rgba(255,255,255,.165)'; c.fill()
       c.strokeStyle = 'rgba(255,255,255,.86)'; c.lineWidth = 2.4; c.lineJoin = 'round'; c.stroke()
     }
-    // radial labels ending at the rim; on the left half they are turned so none is upside down
+    // radial labels ending at the rim; see labelFlipped for which half is turned
     c.font = `600 ${fontSize(n, R)}px ${pal.family}`
     const key = `${R}|${c.font}|${entries.join('\n')}`
     if (lay?.key !== key) lay = { key, labels: entries.map(e => elide(c, e, Math.max(20, R - 18 - hubRadius(R) - 16))) }
     for (let i = 0; i < n; i++) {
-      const mid = (i + 0.5) * 360 / n, left = mid > 90 && mid <= 270
+      const mid = (i + 0.5) * 360 / n, left = labelFlipped(mid)
       c.save()
       c.rotate((left ? mid + 90 : mid - 90) * RAD)
       c.fillStyle = contrastColor(colorOf(i))
@@ -169,7 +169,7 @@ export function initWheel({ getExport, toast }) {
       if (t < 1) { draw(); return requestAnimationFrame(tick) }
       angle = ((to % 360) + 360) % 360 // identical look, small number
       spinning = false; winning = index
-      cv.dataset.angle = angle
+      cv.dataset.angle = angle // test hook: the smoke test reads the final angle to find the slice under the pointer
       $('wwinner').textContent = entries[index]
       $('wwinner').animate({ opacity: [0, 1] }, { duration: quick ? 0 : 420, easing: 'ease-out' })
       lock(); draw()

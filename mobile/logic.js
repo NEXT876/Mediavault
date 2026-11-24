@@ -137,3 +137,8 @@ export function luminance(hex) {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
 }
 export const contrastColor = hex => (luminance(hex) > 0.52 ? '#11141c' : '#ffffff')
+
+// Wheel label orientation. mid = middle of a slice in degrees clockwise from the top. Labels run along the radius:
+// on the right half they read outward, on the left half they are flipped (read inward), so none is upside down.
+// Deliberately differs from the PC wheel, whose `90 < mid <= 270` test leaves labels at the bottom right and top left upside down.
+export const labelFlipped = mid => mid > 180 && mid < 360

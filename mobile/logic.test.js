@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   mediaKind, mimeType, collectMedia, listFolders, sortEntries, uniqueName, isNetworkError,
-  DATA_DIR, relPath, applyEvents, scoreTier, smartWeight, pickRandom, targetAngle, randomPool, parseEntries, contrastColor,
+  DATA_DIR, relPath, applyEvents, scoreTier, smartWeight, pickRandom, targetAngle, randomPool, parseEntries, contrastColor, labelFlipped,
 } from './logic.js'
 
 test('mediaKind', () => {
@@ -154,4 +154,12 @@ test('contrastColor matches the PC wheel labels', () => {
   assert.equal(contrastColor('#000000'), white)
   assert.equal(contrastColor('#ffffff'), dark)
   assert.equal(contrastColor('#7c6cf6'), white)
+})
+
+test('labelFlipped: no wheel label is upside down', () => {
+  // text direction on screen: outward (sin mid, -cos mid) when not flipped, inward when flipped; readable = pointing right (or down)
+  const readable = mid => (labelFlipped(mid) ? -1 : 1) * Math.sin(mid * Math.PI / 180) >= -1e-9
+  for (const mid of [22.5, 45, 90, 135, 180, 225, 270, 315, 337.5]) assert.ok(readable(mid), `label at ${mid} degrees`)
+  assert.deepEqual([45, 90, 180].map(labelFlipped), [false, false, false])
+  assert.deepEqual([181, 270, 315].map(labelFlipped), [true, true, true])
 })

@@ -169,6 +169,15 @@
   #wload { flex:1; }
   #wedit p { margin:0; }
   #wtext { min-height:180px; margin:0; resize:vertical; }
+  @media (max-width:699.98px) { /* phones: top bar + wheel + result + Drehen fit above the tab bar, the editor follows below */
+    [data-view="wheel"] .pagehead { display:none; }
+    #wheelpage { gap:12px; }
+    #wbox { width:max(240px, min(100%, calc(100vh - 300px))); width:max(240px, min(100%, calc(100dvh - 300px))); }
+    #wpanel { background:none; border:0; box-shadow:none; padding:0; }
+    #wresult { padding:6px 12px; }
+    #wresult b { min-height:0; line-height:1.2; }
+    .cap { line-height:1.2; }
+  }
   @media (max-height:500px) { #wbox { width:min(100%, calc(100vh - 80px)); width:min(100%, calc(100dvh - 80px)); } } /* landscape phones: the wheel gets the screen height, the panel scrolls below */
   @media (min-width:1000px) {
     #wheelpage { grid-template-columns:minmax(0, 1fr) 360px; gap:24px; align-items:center; }
