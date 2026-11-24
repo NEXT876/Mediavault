@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mediaKind, collectMedia, findFolder, sortEntries, uniqueName } from './logic.js'
+import { mediaKind, mimeType, collectMedia, findFolder, sortEntries, uniqueName } from './logic.js'
 
 test('mediaKind', () => {
   assert.equal(mediaKind('A.JPG'), 'image')
@@ -31,4 +31,10 @@ test('uniqueName counts up like the PC and remembers its picks', () => {
   assert.equal(uniqueName('IMAGE.jpg', taken), 'IMAGE-2.jpg')
   assert.equal(uniqueName('image.jpg', taken), 'image-3.jpg')
   assert.equal(uniqueName('neu.mov', taken), 'neu.mov')
+})
+test('mimeType', () => {
+  assert.equal(mimeType('a.jpg'), 'image/jpeg')
+  assert.equal(mimeType('b.MOV'), 'video/quicktime')
+  assert.equal(mimeType('c.xyz'), 'application/octet-stream')
+  assert.equal(mimeType('x.constructor'), 'application/octet-stream')
 })

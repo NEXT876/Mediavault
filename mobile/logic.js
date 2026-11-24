@@ -15,7 +15,7 @@ export function mediaKind(name) {
   return IMAGES.includes(e) ? 'image' : VIDEOS.includes(e) ? 'video' : null
 }
 
-export const mimeType = name => MIME[ext(name)] ?? 'application/octet-stream'
+export const mimeType = name => (Object.hasOwn(MIME, ext(name)) ? MIME[ext(name)] : 'application/octet-stream')
 
 export function collectMedia(folder) {
   return (folder.children ?? []).flatMap(n =>
