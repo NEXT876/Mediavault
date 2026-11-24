@@ -4,6 +4,7 @@ import * as scores from './scores.js'
 import { showRating, render as renderRating } from './rating.js'
 import * as random from './random.js'
 import { chooseGroups } from './sheet.js'
+import { initWheel } from './wheel.js'
 
 const $ = id => document.getElementById(id)
 const store = {
@@ -68,7 +69,7 @@ function openFolder(folder) {
   scores.flush() // the old library's queue (a no-op without one)
   scores.activate(null)
   random.reset()
-  renderMore()
+  renderMore(); wheel.refresh()
   for (const e of document.querySelectorAll('.fname')) e.textContent = folder === state.storage.root ? 'Alles (Cloud Drive)' : folder.name
   show('s-lib')
   showPage(store.get('mv-tab') === 'video' ? 'video' : 'image', true)
@@ -82,7 +83,7 @@ async function loadLibrary(folder) {
     data = found && await loadExport(found.exportNode)
   } catch (e) {
     console.warn('library data lookup failed', e)
-    if (folder === state.folder) { state.lib = null; renderMore() }
+    if (folder === state.folder) { state.lib = null; renderMore(); wheel.refresh() }
     return
   }
   if (folder !== state.folder) return // another folder or a logout in the meantime
@@ -91,7 +92,7 @@ async function loadLibrary(folder) {
   if (!found || data) applyTheme(data?.theme)
   scores.activate(state.lib)
   state.tiles.forEach(refreshTile)
-  renderMore()
+  renderMore(); wheel.refresh()
 }
 
 // ---- navigation: one markup, bottom tab bar on phones, sidebar on iPad ----
@@ -106,6 +107,7 @@ function showPage(page, force) {
     else b.removeAttribute('aria-current')
   }
   if (VIEWS[page] === 'library') renderGrid()
+  if (page === 'wheel') wheel.refresh()
   scrollTo(0, 0)
 }
 
@@ -116,6 +118,8 @@ function toast(text) {
   clearTimeout(toastTimer)
   toastTimer = setTimeout(() => { $('toast').hidden = true }, 3500)
 }
+
+const wheel = initWheel({ getExport: () => state.lib?.export, toast })
 
 // mode: normal|smart (the page type, as last shown), all|allsmart (images and videos), groups (sheet)
 async function startRandom(mode) {

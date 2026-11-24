@@ -127,3 +127,13 @@ export function targetAngle(current, index, count, turns) {
   if (target - current < 3.2 * 360) target += 360
   return target
 }
+
+// Port of mediavault/extras/wheel/page.py parse_entries: one trimmed entry per non-empty line.
+export const parseEntries = text => text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+
+// Port of _contrast_color: weighted sum of the sRGB channels (not linearised, like the PC), '#rrggbb' in.
+export function luminance(hex) {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+export const contrastColor = hex => (luminance(hex) > 0.52 ? '#11141c' : '#ffffff')

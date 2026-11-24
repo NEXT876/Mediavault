@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   mediaKind, mimeType, collectMedia, listFolders, sortEntries, uniqueName, isNetworkError,
-  DATA_DIR, relPath, applyEvents, scoreTier, smartWeight, pickRandom, targetAngle, randomPool,
+  DATA_DIR, relPath, applyEvents, scoreTier, smartWeight, pickRandom, targetAngle, randomPool, parseEntries, contrastColor,
 } from './logic.js'
 
 test('mediaKind', () => {
@@ -139,4 +139,19 @@ test('randomPool filters by kind and group', () => {
   assert.deepEqual(names({ kinds: ['image', 'video'], groups: ['Natur', 'Reise'] }), ['a.png', 'v.mp4'])
   assert.deepEqual(names({ kinds: ['video'], groups: ['Natur'] }), [])
   assert.deepEqual(names({ kinds: [], groups: null }), [])
+})
+
+test('parseEntries keeps trimmed non-empty lines', () => {
+  assert.deepEqual(parseEntries(' Pizza \n\n  \r\nSushi\r\n\tDöner'), ['Pizza', 'Sushi', 'Döner'])
+  assert.deepEqual(parseEntries(''), [])
+  assert.deepEqual(parseEntries(' \n \n'), [])
+})
+
+test('contrastColor matches the PC wheel labels', () => {
+  // from mediavault.extras.wheel.page.WHEEL_SLICE_COLORS: blue, coral, yellow, green, lavender, turquoise
+  const dark = '#11141c', white = '#ffffff'
+  assert.deepEqual(['#4f8cff', '#ff6b6b', '#ffd93d', '#2f9e6f', '#b983ff', '#25c4a8'].map(contrastColor), [dark, dark, dark, white, dark, dark])
+  assert.equal(contrastColor('#000000'), white)
+  assert.equal(contrastColor('#ffffff'), dark)
+  assert.equal(contrastColor('#7c6cf6'), white)
 })

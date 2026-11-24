@@ -14,17 +14,17 @@
 <style>
   /* palettes copied from mediavault/gui/theme.py (PALETTES); an unknown theme name falls back to dark */
   :root, :root[data-theme="dark"] { color-scheme:dark;
-    --bg:#1f2228; --surface:#272b33; --alt:#2e333e; --hover:#363d4b; --inp:#252a32; --border:#373e4c; --text:#e6e8ec; --muted:#98a2b3;
+    --bg:#1f2228; --surface:#272b33; --alt:#2e333e; --hover:#363d4b; --inp:#252a32; --border:#373e4c; --bstrong:#485163; --text:#e6e8ec; --muted:#98a2b3;
     --primary:#4f8cff; --pfill:#2f6be0; --pfillh:#2559c4; --pfilltext:#fff; --danger:#c93a3a; --navbg:#2c3b55; --navtext:#8ab4ff;
     --s-high:#1e7a52; --s-mid:#8a6d0f; --s-low:#b4501f; --s-bad:#c0392b;
     --accent:linear-gradient(#4f8cff, #4f8cff); --glow:none; }
   :root[data-theme="light"] { color-scheme:light;
-    --bg:#f4f6fa; --surface:#fff; --alt:#eef1f6; --hover:#e8ecf2; --inp:#fff; --border:#d7dde7; --text:#1b1f24; --muted:#5b6472;
+    --bg:#f4f6fa; --surface:#fff; --alt:#eef1f6; --hover:#e8ecf2; --inp:#fff; --border:#d7dde7; --bstrong:#b9c3d3; --text:#1b1f24; --muted:#5b6472;
     --primary:#2563eb; --pfill:#2563eb; --pfillh:#1d4ed8; --pfilltext:#fff; --danger:#d92d20; --navbg:#edf2ff; --navtext:#2563eb;
     --s-high:#12805c; --s-mid:#b45309; --s-low:#c2410c; --s-bad:#d92d20;
     --accent:linear-gradient(#2563eb, #2563eb); --glow:none; }
   :root[data-theme="neon"] { color-scheme:dark;
-    --bg:#0b0b12; --surface:#14141d; --alt:#1a1a26; --hover:#232334; --inp:#101018; --border:#26263a; --text:#ecebf5; --muted:#8b8aa3;
+    --bg:#0b0b12; --surface:#14141d; --alt:#1a1a26; --hover:#232334; --inp:#101018; --border:#26263a; --bstrong:#3a3757; --text:#ecebf5; --muted:#8b8aa3;
     --primary:#c084fc; --pfill:#1a1528; --pfillh:#251c3a; --pfilltext:#fff; --danger:#d42a4a; --navbg:#221a37; --navtext:#c084fc;
     --s-high:#0d7d70; --s-mid:#7c3aed; --s-low:#db2777; --s-bad:#e11d48;
     --accent:linear-gradient(135deg, #67e8f9, #a78bfa, #f472b6); --glow:0 0 12px rgba(255, 181, 124, .12); }
@@ -32,7 +32,7 @@
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { margin:0; background:var(--bg); color:var(--text); font:16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", sans-serif; }
   [hidden] { display:none !important; }
-  button, input, select { font:inherit; color:inherit; }
+  button, input, select, textarea { font:inherit; color:inherit; }
   button { background:none; border:0; padding:0; margin:0; cursor:pointer; text-align:center; }
   :focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
   .mut { color:var(--muted); }
@@ -152,6 +152,31 @@
     background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 16px; box-shadow:0 4px 16px rgba(0, 0, 0, .35); }
   @media (min-width:700px) { #toast { bottom:24px; } }
 
+  /* wheel: wheel on top (phones, iPad portrait), wheel left and panel right from 1000px (sidebar 240 + room for both) */
+  #wheelpage { display:grid; gap:16px; }
+  #wbox { aspect-ratio:1; width:min(100%, 55vh); width:min(100%, 55dvh); margin:0 auto; }
+  #wcanvas { display:block; width:100%; height:100%; cursor:pointer; touch-action:manipulation; }
+  #wpanel { display:flex; flex-direction:column; gap:16px; width:100%; max-width:520px; margin:0 auto; }
+  #wmain, #wedit { display:flex; flex-direction:column; gap:8px; }
+  #wmain { gap:12px; }
+  #wresult { background:var(--alt); border:1px solid var(--border); border-radius:10px; padding:12px 16px; text-align:center; }
+  #wresult b { display:block; min-height:28px; font-size:20px; font-weight:600; overflow-wrap:anywhere; }
+  .cap { display:block; font-size:14px; font-weight:600; text-transform:uppercase; color:var(--muted); }
+  .whead { display:flex; align-items:center; justify-content:space-between; }
+  .wrow { display:flex; gap:8px; }
+  .wrow .btn { flex:1 1 auto; padding-inline:8px; white-space:nowrap; }
+  .wrow select { flex:2; min-width:0; }
+  #wload { flex:1; }
+  #wedit p { margin:0; }
+  #wtext { min-height:180px; margin:0; resize:vertical; }
+  @media (max-height:500px) { #wbox { width:min(100%, calc(100vh - 80px)); width:min(100%, calc(100dvh - 80px)); } } /* landscape phones: the wheel gets the screen height, the panel scrolls below */
+  @media (min-width:1000px) {
+    #wheelpage { grid-template-columns:minmax(0, 1fr) 360px; gap:24px; align-items:center; }
+    #wbox { width:min(100%, calc(100vh - 96px)); width:min(100%, calc(100dvh - 96px)); }
+    #wpanel { max-width:none; margin:0; }
+    #wedit { order:-1; }
+  }
+
   #viewer { position:fixed; inset:0; padding-bottom:env(safe-area-inset-bottom); background:#000; z-index:10; display:flex; align-items:center; justify-content:center; }
   #viewer img, #viewer video { width:100%; height:100%; object-fit:contain; }
   #close { position:absolute; top:max(12px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right));
@@ -268,7 +293,23 @@
     </section>
     <section data-view="wheel" hidden>
       <div class="pagehead"><h2>🎡 Glücksrad</h2></div>
-      <div class="panel"><p class="mut" style="margin:0">Das Glücksrad folgt bald.</p></div>
+      <div id="wheelpage">
+        <div id="wbox"><canvas id="wcanvas" tabindex="0" role="button" aria-label="Glücksrad drehen"></canvas></div>
+        <div class="panel" id="wpanel">
+          <div id="wmain">
+            <div id="wresult"><span class="cap">Ergebnis</span><b id="wwinner" aria-live="polite">Bereit zum Drehen</b></div>
+            <button id="wspin" class="btn pri">Drehen</button>
+          </div>
+          <div id="wedit">
+            <div class="whead"><span class="cap">Einträge</span><button id="wclear" class="btn">Leeren</button></div>
+            <div class="wrow"><select id="wlist" class="btn fld" aria-label="Gespeicherte Liste"></select><button id="wload" class="btn">Laden</button></div>
+            <div class="wrow"><button id="wall" class="btn">Alle Gruppen</button><button id="wpick" class="btn">Gruppen wählen …</button></div>
+            <p id="whint" class="mut" hidden>Listen und Gruppen gibt es nur mit den Daten vom PC.</p>
+            <textarea id="wtext" class="fld" rows="8" placeholder="Ein Eintrag pro Zeile …" aria-label="Einträge, einer pro Zeile"></textarea>
+            <p id="wcount" class="mut"></p>
+          </div>
+        </div>
+      </div>
     </section>
     <section data-view="more" hidden>
       <div class="pagehead"><h2>⋯ Mehr</h2></div>
