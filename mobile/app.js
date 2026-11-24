@@ -190,7 +190,7 @@ async function openViewer(i) {
       el = document.createElement('video')
       el.controls = true
       el.playsInline = true
-      el.onerror = () => { $('vmsg').textContent = 'Dieses Format kann das iPhone nicht abspielen.'; $('vmsg').hidden = false }
+      el.onerror = () => { if (!el.isConnected) return; $('vmsg').textContent = 'Dieses Format kann das iPhone nicht abspielen.'; $('vmsg').hidden = false }
     } else {
       el = new Image()
       el.alt = node.name
@@ -284,12 +284,4 @@ async function doLogout() {
   show('s-login')
 }
 $('logout').onclick = $('offline-logout').onclick = doLogout
-document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState !== 'visible' || $('s-lib').hidden || !$('viewer').hidden || !state.storage) return
-  try { await state.storage.reload(true) } catch {}
-  // reload rebuilds the node objects, so look the folder up again
-  state.folder = findFolder(Object.values(state.storage.files), store.get('mv-folder') || '', state.storage.root) || state.folder
-  renderGrid()
-})
-
 start()
