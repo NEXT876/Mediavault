@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MediaVault">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>MediaVault</title>
+<style>
+  :root { color-scheme: dark; --bg:#111; --fg:#eee; --mut:#999; --bad:#e66; --acc:#4af; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.4 -apple-system, system-ui, sans-serif;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  [hidden] { display:none !important; }
+  section { padding:16px; }
+  h1 { font-size:20px; margin:0 0 12px; }
+  input, button { font:inherit; width:100%; padding:12px; margin:4px 0; border-radius:8px; border:1px solid #444; background:#222; color:var(--fg); }
+  button { background:var(--acc); color:#000; border:0; font-weight:600; }
+  button.sec { background:#333; color:var(--fg); }
+  .msg { color:var(--bad); min-height:1.4em; }
+  .mut { color:var(--mut); }
+  header { display:flex; gap:8px; align-items:center; padding:8px 12px; position:sticky; top:0; background:var(--bg); z-index:1; }
+  header button { width:auto; margin:0; padding:8px 12px; }
+  header .sp { flex:1; }
+  .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:2px; }
+  .tile { all:unset; position:relative; aspect-ratio:1; background:#222; overflow:hidden; display:block; cursor:pointer; }
+  .tile img { width:100%; height:100%; object-fit:cover; display:block; }
+  .tile .ph { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:4px; text-align:center; font-size:12px; color:var(--mut); word-break:break-all; overflow:hidden; }
+  .tile .ph b { font-size:28px; color:var(--fg); }
+  #viewer { position:fixed; inset:0; background:#000; z-index:10; display:flex; align-items:center; justify-content:center; }
+  #viewer img, #viewer video { max-width:100%; max-height:100%; object-fit:contain; }
+  #close { position:absolute; top:max(12px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right));
+    width:44px; height:44px; padding:0; border-radius:22px; font-size:22px; background:#333; color:#fff; z-index:2; }
+  #vprog { position:absolute; left:0; right:0; bottom:0; height:4px; width:100%; appearance:none; border:0; }
+  #vmsg { position:absolute; color:var(--bad); padding:16px; text-align:center; }
+</style>
+</head>
+<body>
+<section id="s-start" class="mut">Lade …</section>
+<section id="s-offline" hidden>
+  <p>Keine Verbindung.</p>
+  <button id="retry">Erneut versuchen</button>
+</section>
+<section id="s-login" hidden>
+  <h1>MediaVault</h1>
+  <form id="login-form">
+    <input id="email" type="email" placeholder="E-Mail" autocomplete="username" required>
+    <input id="password" type="password" placeholder="Passwort" autocomplete="current-password" required>
+    <input id="code" type="text" inputmode="numeric" placeholder="2FA-Code (optional)" autocomplete="one-time-code">
+    <button type="submit">Anmelden</button>
+  </form>
+  <p class="msg" id="login-msg"></p>
+</section>
+<section id="s-folder" hidden>
+  <h1>Bibliotheksordner</h1>
+  <form id="folder-form">
+    <input id="folder-name" type="text" placeholder="Ordnername in MEGA" autocapitalize="off" required>
+    <button type="submit">Öffnen</button>
+  </form>
+  <p class="msg" id="folder-msg"></p>
+</section>
+<section id="s-lib" hidden style="padding:0">
+  <header>
+    <button id="sort" class="sec" aria-label="Sortierung umschalten"></button>
+    <span class="sp"></span>
+    <button id="upload" hidden>Hochladen</button>
+    <button id="logout" class="sec">Abmelden</button>
+  </header>
+  <p id="lib-msg" class="mut" style="padding:0 16px" hidden></p>
+  <button id="change-folder" class="sec" style="margin:0 16px;width:calc(100% - 32px)" hidden>Ordner ändern</button>
+  <div class="grid" id="grid"></div>
+</section>
+<div id="viewer" hidden>
+  <button id="close" aria-label="Schließen">✕</button>
+  <div id="vmedia" style="display:contents"></div>
+  <progress id="vprog" max="1" value="0"></progress>
+  <p id="vmsg" hidden></p>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
