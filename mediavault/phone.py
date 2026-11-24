@@ -118,7 +118,7 @@ def apply_changes(
         path = os.path.join(changes, name)
         try:
             events += _read_events(path)
-        except (OSError, ValueError, KeyError, TypeError) as exc:
+        except (OSError, ValueError, KeyError, TypeError, OverflowError) as exc:
             logger.warning("Bad phone change file %s: %s", path, exc)
             try:
                 os.replace(path, path + ".bad")

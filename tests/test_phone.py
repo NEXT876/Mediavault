@@ -301,6 +301,7 @@ def test_failed_export_does_not_apply_twice(tmp_path, monkeypatch):
     [
         {"path": "a.jpg", "kind": "view", "at": float("inf")},
         {"path": "a.jpg", "kind": "view", "at": True},
+        {"path": "a.jpg", "kind": "view", "at": 10**400},
         {"path": "a.jpg", "kind": "set", "at": 1.0, "value": True},
         {"path": "a.jpg", "kind": "rate", "at": 1.0, "value": 6},
         {"path": "a.jpg", "kind": "set", "at": 1.0, "value": 0},
