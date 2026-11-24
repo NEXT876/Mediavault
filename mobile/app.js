@@ -204,8 +204,10 @@ async function openViewer(i) {
       el = new Image()
       el.alt = node.name
     }
-    // '#t=0.001' makes iOS show the first frame instead of a black box before play is tapped
-    el.src = el.tagName === 'VIDEO' ? viewUrl + '#t=0.001' : viewUrl
+    // a tiny seek makes iOS paint the first frame instead of a black box before play is tapped
+    // (a '#t=' fragment on the blob URL breaks loading in Safari)
+    if (el.tagName === 'VIDEO') el.onloadedmetadata = () => { el.currentTime = 0.001 }
+    el.src = viewUrl
     $('vmedia').replaceChildren(el)
     $('vprog').hidden = true
     if (el.tagName === 'VIDEO') {
