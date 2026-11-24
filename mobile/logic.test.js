@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   mediaKind, mimeType, collectMedia, listFolders, sortEntries, uniqueName, isNetworkError,
-  DATA_DIR, relPath, applyEvents, scoreTier, smartWeight, pickRandom, targetAngle, randomPool, parseEntries, contrastColor, labelFlipped,
+  DATA_DIR, relPath, applyEvents, scoreTier, smartWeight, pickRandom, targetAngle, randomPool, parseEntries, contrastColor, labelFlipped, liveBatches,
 } from './logic.js'
 
 test('mediaKind', () => {
@@ -162,4 +162,10 @@ test('labelFlipped: no wheel label is upside down', () => {
   for (const mid of [22.5, 45, 90, 135, 180, 225, 270, 315, 337.5]) assert.ok(readable(mid), `label at ${mid} degrees`)
   assert.deepEqual([45, 90, 180].map(labelFlipped), [false, false, false])
   assert.deepEqual([181, 270, 315].map(labelFlipped), [true, true, true])
+})
+
+test('liveBatches keeps pending and still-present confirmed batches, drops applied and rejected ones', () => {
+  const sent = [{ name: 'applied.json' }, { name: 'pending.json', pending: true }, { name: 'present.json' }, { name: 'missing.json' }]
+  const kept = liveBatches(sent, new Set(['applied.json']), new Set(['present.json', 'applied.json']))
+  assert.deepEqual(kept.map(b => b.name), ['pending.json', 'present.json'])
 })

@@ -1,5 +1,5 @@
 // The phone's view of scores: export items + events not yet applied by the PC, and the outgoing change queue.
-import { applyEvents, relPath, mediaKind } from './logic.js'
+import { applyEvents, relPath, liveBatches } from './logic.js'
 import { uploadChanges, newChangeName, changeNames, epoch } from './mega.js'
 
 const FLUSH_DELAY = 20000
@@ -9,12 +9,11 @@ const stem = name => name.replace(/\.[^.]+$/, '')
 
 // null without MediaVault data (or without a loaded export); else
 // { lib, qKey, sKey, queue: events not in a batch yet, sent: [{ name, events, pending? }] batches not yet applied by the PC
-// (pending = name reserved, upload not confirmed), keys, timer, busy }
+// (pending = name reserved, upload not confirmed), keys, byPath: lowercased path -> its unapplied events, timer, busy }
 let S = null
 let listener = null
 const cache = new Map() // node -> current item, dropped per node on record()
 
-export const active = () => !!S
 export const onChange = fn => { listener = fn }
 
 export function activate(lib) {
@@ -23,50 +22,55 @@ export function activate(lib) {
   S = null
   if (!lib?.export) return
   const id = lib.root.nodeId, items = lib.export.items ?? {}
-  const applied = new Set(lib.export.applied ?? [])
   S = { lib, qKey: 'mv-queue:' + id, sKey: 'mv-sent:' + id, timer: 0, busy: false,
     keys: new Map(Object.keys(items).map(k => [k.toLowerCase(), k])) }
   S.queue = read(S.qKey)
-  const uploaded = changeNames(lib.dataDir)
-  // the export already contains applied batches; a confirmed batch that is neither applied nor on MEGA was rejected by the PC
-  S.sent = read(S.sKey).filter(b => !applied.has(b.name) && (b.pending || uploaded.has(b.name)))
+  S.sent = liveBatches(read(S.sKey), new Set(lib.export.applied ?? []), changeNames(lib.dataDir))
   write(S.sKey, S.sent)
+  S.byPath = new Map()
+  for (const e of [...S.sent.flatMap(b => b.events), ...S.queue]) addEvent(e)
   if (S.queue.length || S.sent.some(b => b.pending)) schedule(S) // left over from an earlier run
 }
 
-const exportItem = node => {
-  const path = S && relPath(node, S.lib.root)
-  const key = path && S.keys.get(path.toLowerCase())
-  return key == null ? undefined : S.lib.export.items[key]
+const addEvent = e => {
+  const k = e.path.toLowerCase()
+  if (!S.byPath.has(k)) S.byPath.set(k, [])
+  S.byPath.get(k).push(e)
 }
 
-export const title = node => exportItem(node)?.title || stem(node.name)
+// Key of node in the export, undefined for files the PC has not exported: the PC drops their events, so they get no score.
+const exportKey = node => {
+  const path = S && relPath(node, S.lib.root)
+  return path == null ? undefined : S.keys.get(path.toLowerCase())
+}
+
+export const title = node => {
+  const key = exportKey(node)
+  return (key != null && S.lib.export.items[key].title) || stem(node.name)
+}
 
 export function item(node) {
-  const path = S && relPath(node, S.lib.root)
-  if (!path) return null
+  const key = exportKey(node)
+  if (key == null) return null
   let it = cache.get(node)
   if (!it) {
-    // 50 is the PC default for entries it has not seen yet
-    const base = exportItem(node) ?? { title: stem(node.name), type: mediaKind(node.name), score: 50, group: '', watched: 0, last_watched: 0, ratings: 0 }
-    const low = path.toLowerCase()
-    const events = [...S.sent.flatMap(b => b.events), ...S.queue].filter(e => e.path.toLowerCase() === low)
-    it = applyEvents({ [path]: base }, events)[path]
+    it = applyEvents({ [key]: S.lib.export.items[key] }, S.byPath.get(key.toLowerCase()) ?? [])[key]
     cache.set(node, it)
   }
   return it
 }
 
 export function record(node, kind, value) {
-  const s = S, path = s && relPath(node, s.lib.root)
-  if (!path) return
-  const e = { path, kind, at: Math.round(Date.now()) / 1000 }
+  const s = S, key = exportKey(node)
+  if (key == null) return
+  const e = { path: relPath(node, s.lib.root), kind, at: Date.now() / 1000 }
   if (kind !== 'view') {
     if (!Number.isFinite(value)) return
     const [lo, hi] = kind === 'rate' ? [1, 5] : [1, 100]
     e.value = Math.min(hi, Math.max(lo, Math.round(value)))
   }
   s.queue.push(e)
+  addEvent(e)
   write(s.qKey, s.queue)
   cache.delete(node)
   schedule(s)

@@ -87,6 +87,11 @@ export function applyEvents(items, events) {
   return out
 }
 
+// Sent batches worth keeping. The export already contains applied batches; a confirmed batch that is neither applied
+// nor on MEGA (applied/uploaded: Sets of names) was rejected by the PC.
+export const liveBatches = (sent, applied, uploaded) =>
+  sent.filter(b => !applied.has(b.name) && (b.pending || uploaded.has(b.name)))
+
 export const scoreTier = score => (score >= 75 ? 'high' : score >= 50 ? 'mid' : score >= 25 ? 'low' : 'bad')
 
 // Weight of mediavault/database.py get_random; `now` and last_watched are unix seconds.

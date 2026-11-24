@@ -26,9 +26,9 @@ export function render() {
   $('rstats').replaceChildren(b, ` · ${it.watched}× angesehen · ${it.ratings} Bewertungen`)
 }
 
-// null hides the panel (viewer closed, or no MediaVault data)
+// null hides the panel (viewer closed, or a file without MediaVault data)
 export function showRating(n) {
-  node = n && scores.active() ? n : null
+  node = n && scores.item(n) ? n : null
   $('rate').hidden = !node
   closeForm()
   render()

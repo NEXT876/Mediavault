@@ -41,7 +41,7 @@ export const epoch = () => generation // lets callers notice a logout between tw
 
 export async function logout() {
   generation++
-  for (const k of ['mv-session', 'mv-folder', 'mv-sort']) localStorage.removeItem(k)
+  for (const k of ['mv-session', 'mv-folder', 'mv-sort', 'mv-wheel']) localStorage.removeItem(k)
   for (const k of Object.keys(localStorage)) if (/^mv-(queue|sent):/.test(k)) localStorage.removeItem(k)
   await caches.delete('mv-files')
   await caches.delete('mv-thumbs')
@@ -188,7 +188,7 @@ export function newChangeName() {
 // Writes a change file the PC applies later; returns its name. The caller reserves `name` first so a retry reuses it.
 export async function uploadChanges(dataDir, events, name = newChangeName()) {
   const dir = childDir(dataDir, CHANGES_DIR) ?? await dataDir.mkdir(CHANGES_DIR)
-  const body = new TextEncoder().encode(JSON.stringify({ version: 1, events: events.map(e => ({ ...e, at: Math.round(e.at * 1000) / 1000 })) }))
+  const body = new TextEncoder().encode(JSON.stringify({ version: 1, events: events }))
   const up = dir.upload({ name, size: body.length }, body)
   await new Promise((res, rej) => { up.on?.('error', rej); up.complete.then(res, rej) })
   return name

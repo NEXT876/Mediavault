@@ -84,7 +84,7 @@ def _apply(entry: MediaItem, event: dict[str, Any]) -> None:
         entry.score = min(100, max(1, event["value"]))
         return
     if kind == "rate":
-        entry.score = min(100, max(1, entry.score + _RATE_DELTA.get(event["value"], 0)))
+        entry.score = min(100, max(1, entry.score + _RATE_DELTA[event["value"]]))
         entry.rating_count += 1
     entry.watched_counter += 1
     entry.last_watched = max(entry.last_watched, at)

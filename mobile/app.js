@@ -11,7 +11,6 @@ const store = {
   get: k => { try { return localStorage.getItem(k) } catch { return null } },
   set: (k, v) => { try { localStorage.setItem(k, v) } catch {} },
 }
-// Task 4 relies on: state.storage, state.folder, state.lib, state.entries, renderGrid()
 // state.lib: undefined while loading, null without MediaVault data, else { root, dataDir, export }
 const state = { storage: null, folder: null, lib: null, page: 'image', entries: [], tiles: new Map() }
 let thumbUrls = []
@@ -139,7 +138,8 @@ async function startRandom(mode) {
 
 function renderMore() {
   $('more-info').textContent = state.lib === undefined ? 'Wird geladen …'
-    : state.lib ? `Mit MediaVault verbunden · Theme vom PC: ${THEMES[document.documentElement.dataset.theme]}`
+    : state.lib?.export ? `Mit MediaVault verbunden · Theme vom PC: ${THEMES[document.documentElement.dataset.theme]}`
+    : state.lib ? 'MediaVault-Daten konnten nicht geladen werden. Ordner neu öffnen, um es erneut zu versuchen.'
     : 'Dieser Ordner gehört zu keiner MediaVault-Config. Score, Smart-Zufall und Gruppen sind hier aus.'
 }
 
@@ -489,7 +489,8 @@ $('sort').onchange = () => {
 }
 async function doLogout() {
   if (!confirm('Abmelden und alle gespeicherten Dateien auf diesem Gerät löschen?')) return
-  // stop work that would refill the caches; the queue goes with the logout
+  // stop work that would refill the caches
+  try { await scores.flush() } catch {} // best effort: the queue goes with the logout
   scores.activate(null)
   queue.length = 0
   observer.disconnect()

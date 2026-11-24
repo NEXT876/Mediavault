@@ -41,6 +41,7 @@ export function chooseGroups({ title, groups, types = false, actions }) {
     dlg.replaceChildren(...kids)
     dlg.onclose = () => resolve(result)
     dlg.onclick = e => { // a tap on the backdrop: the click target is the dialog itself, so check the point against its box
+      if (e.target !== dlg) return // keyboard clicks on a checkbox or button report the point 0,0
       const r = dlg.getBoundingClientRect()
       if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dlg.close()
     }
