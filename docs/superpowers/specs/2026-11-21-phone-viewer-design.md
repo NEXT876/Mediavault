@@ -48,8 +48,13 @@ nur ansehen und hochladen. Danach wird weiter entschieden.
   (`MainWindow.auto_scan_folder` → `library.scan`, durchsucht Unterordner
   rekursiv, nicht im KI-Modus). Endungen, die der PC kennt:
   Bilder `.png .jpg .jpeg .bmp .webp`, Videos `.mp4 .mkv .avi .mov .webm .m4v .wmv`.
-- Der PC gleicht den Bibliotheksordner per rclone mit MEGA ab. Das richtet Ben
-  einmal ein; das README bekommt dafür einen Abschnitt.
+- Der PC gleicht den Bibliotheksordner mit MEGA ab, über die Synchronisierung
+  der MEGA-Desktop-App (beide Richtungen). Ben richtet sie direkt für seinen
+  bisherigen lokalen Bibliotheksordner ein, damit die gespeicherten absoluten
+  Pfade und Wertungen gültig bleiben. Configs ohne Abgleich bleiben nur lokal
+  und sind vom Handy aus nicht sichtbar. Das README bekommt dafür einen Abschnitt.
+- Spike-Langzeittest bestanden: Cache nach 3 Tagen noch da, Login mit
+  gespeicherter Sitzung ohne Passwort funktioniert.
 
 ## Wege
 
@@ -78,15 +83,21 @@ Von Claude (bitte prüfen):
   alle Mediendateien darin, auch in Unterordnern, wie der PC-Scan.
 - **Uploads** gehen in den Unterordner `Vom Handy` (wird bei Bedarf angelegt).
   Der PC-Scan findet sie dort, und sie mischen sich nicht mit PC-Dateien
-  gleichen Namens. Gibt es den Namen schon, wird `name (2).jpg` usw. vergeben
-  (wie `unique_destination` am PC). Dateien mit Endungen, die der PC nicht
+  gleichen Namens. Gibt es den Namen schon, wird `name-2.jpg`, `name-3.jpg` usw. vergeben
+  (wie `transfer.unique_destination` am PC). Dateien mit Endungen, die der PC nicht
   kennt (z. B. `.heic`), werden abgelehnt mit Hinweis. Safari wandelt Fotos
   aus der Mediathek beim Auswählen normalerweise in JPEG um. Fortschritt pro
   Datei; nach dem Upload erscheinen sie sofort im Raster.
-- **Vorschaubilder:** baut das Handy selbst, etwa 300 px, als JPEG. Bilder
-  über `createImageBitmap` und Canvas, Videos über ein `<video>`, das auf
-  etwa 2 s springt (wie der PC). Gespeichert in der Cache Storage, Schlüssel ist
-  die MEGA-Knoten-ID. Erzeugt werden sie der Reihe nach für sichtbare Einträge.
+- **Vorschaubilder:** baut das Handy selbst, etwa 300 px, als JPEG, gespeichert
+  in der Cache Storage (Schlüssel: MEGA-Knoten-ID). Bilder: die Datei wird
+  geladen (meist klein, danach liegt sie auch fürs Vollbild bereit) und über
+  Canvas verkleinert. Videos: `megajs` kann MEGAs eigene Vorschaubilder nicht
+  laden, und ein Video-Vorschaubild bräuchte das ganze Video. Deshalb zeigt
+  das Raster für Videos einen Platzhalter (▶ und Dateiname), bis das Video
+  einmal geöffnet wurde; dann wird aus dem geladenen Video ein Bild bei etwa
+  2 s erzeugt (wie der PC). Vom Handy hochgeladene Dateien bekommen ihr
+  Vorschaubild sofort aus der lokalen Datei. Erzeugt wird der Reihe nach für
+  Einträge, die ins Bild scrollen.
 - **Volle Dateien:** werden beim Öffnen komplett geladen und in der Cache
   Storage abgelegt; beim nächsten Öffnen kommen sie von dort. Kein Vorabladen
   der ganzen Bibliothek. Fortschrittsanzeige beim Laden.
@@ -98,9 +109,7 @@ Von Claude (bitte prüfen):
 - **Pages:** dient jetzt aus `feature/phone-pwa-spike`. Nach dem Merge stellt
   Ben Pages auf `develop` um (später `main`); die URL wird
   `https://next876.github.io/Mediavault/mobile/`.
-- **Spike:** `spike/` wird im selben Branch gelöscht, sobald der
-  Persistenz-Test (Cache nach 1–2 Tagen noch da, Login mit gespeicherter
-  Sitzung) gelaufen ist.
+- **Spike:** `spike/` wird im selben Branch gelöscht.
 
 ## Für den Umsetzenden offen
 
