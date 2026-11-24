@@ -1,6 +1,8 @@
 import json
 import os
 
+import pytest
+
 from mediavault import phone
 from mediavault.database import MediaDatabase
 from mediavault.models import LibraryRoot, MediaItem, MediaType
@@ -120,7 +122,7 @@ def test_rate_set_view_rules(tmp_path):
         [
             ev("a.jpg", "rate", 10.0, 5),
             ev("b.jpg", "rate", 10.0, 1),
-            ev("c.jpg", "set", 10.0, 500),
+            ev("c.jpg", "set", 10.0, 100),
             ev("c.jpg", "view", 20.0),
         ],
     )
@@ -250,3 +252,96 @@ def test_sync_unavailable_location_does_nothing(tmp_path):
 
     assert not (tmp_path / phone.DATA_DIR).exists()
     assert not (tmp_path / "gone").exists()
+
+
+def test_sync_read_only_db_touches_nothing(tmp_path):
+    folder = str(tmp_path / "lib")
+    item = MediaItem("A", image_path=f"{folder}/a.jpg", score=50)
+    db, loc = make_library(tmp_path, item)
+    db.read_only = True
+    write_change(loc, "1-aaaaaaaa.json", [ev("a.jpg", "set", 1.0, 70)])
+    change = tmp_path / "lib" / phone.DATA_DIR / phone.CHANGES_DIR / "1-aaaaaaaa.json"
+
+    assert phone.sync(db, loc, "dark", {}) == 0
+
+    assert item.score == 50
+    assert change.exists()
+    assert not (tmp_path / "lib" / phone.DATA_DIR / phone.EXPORT_NAME).exists()
+
+
+def test_failed_export_does_not_apply_twice(tmp_path, monkeypatch):
+    folder = str(tmp_path / "lib")
+    item = MediaItem("A", image_path=f"{folder}/a.jpg", score=50)
+    db, loc = make_library(tmp_path, item)
+    write_change(loc, "1-aaaaaaaa.json", [ev("a.jpg", "rate", 1.0, 5)])
+    change = tmp_path / "lib" / phone.DATA_DIR / phone.CHANGES_DIR / "1-aaaaaaaa.json"
+    real = phone.write_export
+    calls = []
+
+    def flaky(*args):
+        calls.append(1)
+        if len(calls) == 1:
+            raise PermissionError("held by MEGA")
+        real(*args)
+
+    monkeypatch.setattr(phone, "write_export", flaky)
+
+    assert phone.sync(db, loc, "dark", {}) == 0
+    assert item.score == 60
+    assert change.exists()
+
+    assert phone.sync(db, loc, "dark", {}) == 1
+    assert item.score == 60
+    assert read_export(loc)["applied"] == ["1-aaaaaaaa.json"]
+    assert not change.exists()
+
+
+@pytest.mark.parametrize(
+    "event",
+    [
+        {"path": "a.jpg", "kind": "view", "at": float("inf")},
+        {"path": "a.jpg", "kind": "view", "at": True},
+        {"path": "a.jpg", "kind": "set", "at": 1.0, "value": True},
+        {"path": "a.jpg", "kind": "rate", "at": 1.0, "value": 6},
+        {"path": "a.jpg", "kind": "set", "at": 1.0, "value": 0},
+        {"path": "a.jpg", "kind": "set", "at": 1.0},
+    ],
+)
+def test_invalid_events_make_the_file_bad(tmp_path, event):
+    folder = str(tmp_path / "lib")
+    item = MediaItem("A", image_path=f"{folder}/a.jpg", score=50)
+    db, loc = make_library(tmp_path, item)
+    write_change(loc, "1-aaaaaaaa.json", [event])
+
+    assert phone.apply_changes(db, loc, []) == []
+
+    assert item.score == 50
+    changes = tmp_path / "lib" / phone.DATA_DIR / phone.CHANGES_DIR
+    assert (changes / "1-aaaaaaaa.json.bad").exists()
+
+
+def test_broken_export_applies_nothing_and_is_rewritten(tmp_path):
+    folder = str(tmp_path / "lib")
+    item = MediaItem("A", image_path=f"{folder}/a.jpg", score=50)
+    db, loc = make_library(tmp_path, item)
+    write_change(loc, "1-aaaaaaaa.json", [ev("a.jpg", "set", 1.0, 70)])
+    export = tmp_path / "lib" / phone.DATA_DIR / phone.EXPORT_NAME
+    export.write_text("{broken", encoding="utf-8")
+
+    assert phone.sync(db, loc, "dark", {}) == 0
+
+    assert item.score == 50
+    assert read_export(loc)["applied"] == []
+    assert phone.sync(db, loc, "dark", {}) == 1
+    assert item.score == 70
+
+
+def test_sync_never_raises(tmp_path, monkeypatch):
+    db, loc = make_library(tmp_path)
+
+    def boom(*args):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(phone, "apply_changes", boom)
+
+    assert phone.sync(db, loc, "dark", {}) == 0

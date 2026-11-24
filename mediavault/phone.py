@@ -9,6 +9,7 @@ sync skips dot-names by default. The event rules are the same on the phone
 
 import json
 import logging
+import math
 import os
 import time
 from collections.abc import Mapping
@@ -27,6 +28,9 @@ EXPORT_NAME = "phone.json"
 CHANGES_DIR = "changes"
 MAX_APPLIED = 500
 _RATE_DELTA = {1: -10, 2: -5, 3: 0, 4: 5, 5: 10}
+# Change files applied in memory whose export failed, by database path. Without
+# it a failed write would apply the same file again on the next sync.
+_pending: dict[str, list[str]] = {}
 
 
 def _relative(entry: MediaItem, location: LibraryRoot) -> str | None:
@@ -57,11 +61,16 @@ def _read_events(path: str) -> list[dict[str, Any]]:
     if not isinstance(events, list):
         raise ValueError("events is not a list")
     for event in events:
+        kind, value, at = event["kind"], event.get("value"), event["at"]
         valid = (
             isinstance(event["path"], str)
-            and event["kind"] in ("rate", "set", "view")
-            and isinstance(event["at"], (int, float))
-            and (event["kind"] == "view" or isinstance(event["value"], int))
+            and type(at) in (int, float)
+            and math.isfinite(at)
+            and (
+                kind == "view"
+                or (kind == "rate" and type(value) is int and 1 <= value <= 5)
+                or (kind == "set" and type(value) is int and 1 <= value <= 100)
+            )
         )
         if not valid:
             raise ValueError(f"bad event {event!r}")
@@ -188,32 +197,40 @@ def sync(
 ) -> int:
     """Import the phone's changes and refresh the export.
 
-    The order is save database, write export, delete change files, so a crash
-    in between never applies a file twice (its name is already in ``applied``).
+    The order is save database, write export, delete change files. A failed
+    write keeps the applied names in memory, so the next sync does not apply
+    them twice; only a hard crash between save and export can still do that.
     Never raises: the app must start even when the folder is unwritable.
 
     Returns:
-        Number of change files applied; 0 for an unavailable location.
+        Number of change files applied; 0 for an unavailable location, a
+        read-only database or a failed write.
     """
-    if not location.available or not os.path.isdir(location.folder):
+    if db.read_only or not location.available or not os.path.isdir(location.folder):
         return 0
     export = os.path.join(location.folder, DATA_DIR, EXPORT_NAME)
+    changes = os.path.join(location.folder, DATA_DIR, CHANGES_DIR)
     try:
-        try:
-            with open(export, encoding="utf-8") as f:
-                applied = [n for n in json.load(f)["applied"] if isinstance(n, str)]
-        except (OSError, ValueError, KeyError, TypeError):
-            applied = []
-        new = apply_changes(db, location, applied)
-        if new:
+        applied, broken = [], False
+        if os.path.exists(export):
+            try:
+                with open(export, encoding="utf-8") as f:
+                    applied = [n for n in json.load(f)["applied"] if isinstance(n, str)]
+            except (OSError, ValueError, KeyError, TypeError):
+                logger.warning("Unreadable phone export %s, rewriting it", export)
+                broken = True
+        pending = _pending.setdefault(db.filepath, [])
+        new = [] if broken else apply_changes(db, location, applied + pending)
+        pending += new
+        if pending:
             db.save()
-        write_export(db, location, theme, wheel, applied + new)
-        changes = os.path.join(location.folder, DATA_DIR, CHANGES_DIR)
+        write_export(db, location, theme, wheel, applied + pending)
+        done, pending[:] = list(pending), []
         # Also files that came back after being applied (e.g. a MEGA re-sync).
-        for name in applied + new:
+        for name in applied + done:
             with suppress(OSError):
                 os.remove(os.path.join(changes, name))
-    except (OSError, ValueError):
+    except Exception:
         logger.warning("Phone sync failed", exc_info=True)
         return 0
-    return len(new)
+    return len(done)
