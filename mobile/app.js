@@ -187,6 +187,7 @@ async function openViewer(i) {
   clearMedia()
   $('viewer').hidden = false
   $('vmsg').hidden = true
+  chrome(true)
   $('loop').hidden = mediaKind(node.name) !== 'video'
   $('vprog').hidden = false
   $('vprog').value = 0
@@ -200,6 +201,7 @@ async function openViewer(i) {
       el.controls = true
       el.playsInline = true
       el.loop = store.get('mv-loop') === '1' // native loop restarts without a gap
+      el.onplay = el.onpause = () => chrome(true)
       el.preload = 'auto'
       el.onerror = () => { if (!el.isConnected) return; $('vmsg').textContent = 'Dieses Format kann das iPhone nicht abspielen.'; $('vmsg').hidden = false }
     } else {
@@ -235,6 +237,24 @@ function closeViewer() {
   $('viewer').hidden = true
 }
 
+// Close and loop buttons mimic the iOS video bar: hidden 3 s into playback, a tap toggles them, paused keeps them.
+let idleTimer
+function chrome(show) {
+  clearTimeout(idleTimer)
+  $('viewer').classList.toggle('idle', !show)
+  const v = $('vmedia').querySelector('video')
+  if (show && v && !v.paused) idleTimer = setTimeout(() => $('viewer').classList.add('idle'), 3000)
+}
+let tap
+$('viewer').addEventListener('touchstart', e => { tap = e.changedTouches[0] }, { passive: true })
+$('viewer').addEventListener('touchend', e => {
+  const s = tap, t = e.changedTouches[0]
+  tap = null
+  if (!s || e.target.closest('button') || !$('vmedia').querySelector('video')) return
+  if (Math.hypot(t.clientX - s.clientX, t.clientY - s.clientY) > 10) return
+  // taps on the native control bar keep everything shown; elsewhere a tap toggles like iOS does
+  chrome(s.clientY > innerHeight - 120 || $('viewer').classList.contains('idle'))
+}, { passive: true })
 $('close').onclick = closeViewer
 const showLoop = () => $('loop').setAttribute('aria-pressed', String(store.get('mv-loop') === '1'))
 $('loop').onclick = () => {

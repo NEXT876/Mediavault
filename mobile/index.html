@@ -42,6 +42,8 @@
     width:44px; height:44px; padding:0; border-radius:22px; font-size:22px; background:#333; color:#fff; z-index:2; }
   #loop { position:absolute; top:max(12px, env(safe-area-inset-top)); left:max(12px, env(safe-area-inset-left));
     width:auto; height:44px; padding:0 14px; border-radius:22px; background:#333; color:#fff; z-index:2; font-weight:400; }
+  #close, #loop { transition:opacity .25s; }
+  #viewer.idle #close, #viewer.idle #loop { opacity:0; pointer-events:none; }
   #loop[aria-pressed="true"] { background:var(--acc); color:#000; }
   #vprog { position:absolute; left:0; right:0; bottom:0; height:4px; width:100%; appearance:none; border:0; background:#333; }
   #vprog::-webkit-progress-bar { background:#333; }
