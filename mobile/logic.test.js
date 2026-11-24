@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   mediaKind, mimeType, collectMedia, listFolders, sortEntries, uniqueName, isNetworkError,
-  DATA_DIR, relPath, applyEvents, scoreTier, smartWeight, pickRandom, targetAngle,
+  DATA_DIR, relPath, applyEvents, scoreTier, smartWeight, pickRandom, targetAngle, randomPool,
 } from './logic.js'
 
 test('mediaKind', () => {
@@ -127,4 +127,16 @@ test('targetAngle matches the PC wheel', () => {
   assert.equal(targetAngle(123.5, 7, 8, 6), 2542.5)
   assert.equal(targetAngle(700, 3, 3, 1), 1740) // too few turns: pushed past 3.2
   assert.equal(targetAngle(50, 1, 2, 3.3), 1530)
+})
+
+test('randomPool filters by kind and group', () => {
+  const nodes = ['a.png', 'b.jpg', 'v.mp4', 'x.txt'].map(name => ({ name }))
+  const groups = { 'a.png': 'Natur', 'v.mp4': 'Reise' }
+  const itemOf = n => (groups[n.name] ? { group: groups[n.name] } : null)
+  const names = (spec) => randomPool(nodes, spec, itemOf).map(n => n.name)
+  assert.deepEqual(names({ kinds: ['image'], groups: null }), ['a.png', 'b.jpg'])
+  assert.deepEqual(names({ kinds: ['image', 'video'], groups: null }), ['a.png', 'b.jpg', 'v.mp4'])
+  assert.deepEqual(names({ kinds: ['image', 'video'], groups: ['Natur', 'Reise'] }), ['a.png', 'v.mp4'])
+  assert.deepEqual(names({ kinds: ['video'], groups: ['Natur'] }), [])
+  assert.deepEqual(names({ kinds: [], groups: null }), [])
 })

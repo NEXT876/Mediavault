@@ -132,6 +132,26 @@
     .thumb { border-radius:6px; }
   }
 
+  /* sheet (random from groups, wheel group choice): bottom sheet on phones, centered dialog on wide screens */
+  #sheet { border:1px solid var(--border); border-radius:14px; background:var(--surface); color:var(--text); box-shadow:var(--glow);
+    padding:16px; width:min(420px, calc(100% - 24px)); max-height:calc(100vh - 24px); max-height:calc(100dvh - 24px); }
+  #sheet[open] { display:flex; flex-direction:column; gap:12px; }
+  #sheet::backdrop { background:rgba(0, 0, 0, .6); }
+  @media (max-width:699.98px) { #sheet { margin:auto auto max(12px, env(safe-area-inset-bottom)); } }
+  #sheet h2 { margin:0; }
+  #sheet fieldset { border:0; margin:0; padding:0; min-width:0; }
+  #sheet legend { padding:0; margin-bottom:4px; font-size:14px; font-weight:600; text-transform:uppercase; color:var(--muted); }
+  #sheet .glist { overflow-y:auto; max-height:40vh; max-height:40dvh; border:1px solid var(--border); border-radius:8px; background:var(--inp); padding:0 12px; }
+  #sheet .opt { display:flex; align-items:center; gap:10px; min-height:44px; }
+  #sheet .opt input { width:20px; height:20px; margin:0; flex:none; accent-color:var(--primary); }
+  #sheet .types { display:flex; gap:20px; }
+  #sheet .acts { display:flex; gap:8px; }
+  #sheet .acts .btn { flex:1; padding-inline:8px; }
+  #sheet p { margin:0; }
+  #toast { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(88px + env(safe-area-inset-bottom)); z-index:6; max-width:calc(100% - 32px);
+    background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 16px; box-shadow:0 4px 16px rgba(0, 0, 0, .35); }
+  @media (min-width:700px) { #toast { bottom:24px; } }
+
   #viewer { position:fixed; inset:0; padding-bottom:env(safe-area-inset-bottom); background:#000; z-index:10; display:flex; align-items:center; justify-content:center; }
   #viewer img, #viewer video { width:100%; height:100%; object-fit:contain; }
   #close { position:absolute; top:max(12px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right));
@@ -163,8 +183,10 @@
   #vseek::-webkit-slider-runnable-track { height:4px; border-radius:2px;
     background:linear-gradient(to right, #fff var(--p, 0%), rgba(255,255,255,.35) var(--p, 0%)); }
   #vseek::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; margin-top:-6px; border-radius:8px; background:#fff; }
-  #close, #vfoot { transition:opacity .25s; }
-  #viewer.idle #close, #viewer.idle #vfoot { opacity:0; pointer-events:none; }
+  #again { position:absolute; top:max(12px, env(safe-area-inset-top)); left:max(12px, env(safe-area-inset-left)); height:44px; padding:0 16px; border-radius:22px; z-index:2;
+    font-weight:600; background:rgba(0,0,0,.45); color:#fff; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+  #close, #again, #vfoot { transition:opacity .25s; }
+  #viewer.idle #close, #viewer.idle #again, #viewer.idle #vfoot { opacity:0; pointer-events:none; }
   #vprog { position:absolute; left:0; right:0; bottom:0; height:4px; width:100%; appearance:none; border:0; background:#333; }
   #vprog::-webkit-progress-bar { background:#333; }
   #vprog::-webkit-progress-value { background:#eee; }
@@ -258,8 +280,11 @@
     </section>
   </main>
 </div>
+<dialog id="sheet" aria-labelledby="sheet-title"></dialog>
+<p id="toast" role="status" hidden></p>
 <div id="viewer" hidden>
   <button id="close" aria-label="Schließen">✕</button>
+  <button id="again" hidden>🎲 Nochmal</button>
   <div id="vfoot">
     <div id="rate" hidden>
       <p id="rstats" aria-live="polite"></p>

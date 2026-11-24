@@ -101,6 +101,11 @@ export function smartWeight(item, now) {
   return Math.max(1, w)
 }
 
+// Nodes of one of `kinds` ('image'|'video') whose current group (itemOf(node)?.group) is in `groups` (null = any group).
+export function randomPool(nodes, { kinds, groups }, itemOf) {
+  return nodes.filter(n => kinds.includes(mediaKind(n.name)) && (!groups || groups.includes(itemOf(n)?.group)))
+}
+
 // One element of pool (null if empty); `recent` is skipped unless it would empty the pool; weightOf null = uniform.
 export function pickRandom(pool, weightOf, recent, rnd = Math.random) {
   const rest = pool.filter(x => !recent.includes(x))

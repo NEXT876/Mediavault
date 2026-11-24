@@ -2,6 +2,8 @@ import { login, restoreSession, logout, getFile, cachedThumb, makeThumb, upload,
 import { mediaKind, collectMedia, listFolders, sortEntries, isNetworkError, scoreTier } from './logic.js'
 import * as scores from './scores.js'
 import { showRating, render as renderRating } from './rating.js'
+import * as random from './random.js'
+import { chooseGroups } from './sheet.js'
 
 const $ = id => document.getElementById(id)
 const store = {
@@ -65,6 +67,7 @@ function openFolder(folder) {
   state.lib = undefined
   scores.flush() // the old library's queue (a no-op without one)
   scores.activate(null)
+  random.reset()
   renderMore()
   for (const e of document.querySelectorAll('.fname')) e.textContent = folder === state.storage.root ? 'Alles (Cloud Drive)' : folder.name
   show('s-lib')
@@ -106,8 +109,29 @@ function showPage(page, force) {
   scrollTo(0, 0)
 }
 
-// Task 5 implements the random pick for mode normal|smart|all|allsmart|groups.
-function startRandom(mode) {}
+let toastTimer
+function toast(text) {
+  $('toast').textContent = text
+  $('toast').hidden = false
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { $('toast').hidden = true }, 3500)
+}
+
+// mode: normal|smart (the page type, as last shown), all|allsmart (images and videos), groups (sheet)
+async function startRandom(mode) {
+  let spec = { kinds: mode.startsWith('all') ? ['image', 'video'] : [store.get('mv-tab') === 'video' ? 'video' : 'image'], smart: mode.endsWith('smart') }
+  if (mode === 'groups') {
+    const r = await chooseGroups({
+      title: 'Gruppen-Zufall', groups: state.lib?.export?.groups ?? [], types: true,
+      actions: [{ id: 'normal', label: '🎲 Normal' }, { id: 'smart', label: '⚖️ Smart', primary: true }],
+    })
+    if (!r) return
+    spec = { kinds: r.types, groups: r.groups, smart: r.action === 'smart' }
+  }
+  const node = random.begin(state.folder, spec)
+  if (node) openNode(node)
+  else toast('Keine passenden Einträge.')
+}
 
 function renderMore() {
   const data = state.lib === undefined ? 'wird geladen …' : state.lib ? 'MediaVault-Config gefunden' : 'keine MediaVault-Daten in diesem Ordner'
@@ -279,14 +303,25 @@ function clearMedia() {
   viewUrl = null
 }
 
-async function openViewer(i) {
+function openViewer(i) {
   if (i < 0 || i >= state.entries.length) return
   current = i
+  openNode(state.entries[i])
+}
+
+// left/right: the neighbour in the grid, or in the random history (left = next pick, right = previous one)
+function step(d) {
+  if (!random.active()) return openViewer(current + d)
+  const node = d > 0 ? random.next() : random.prev()
+  if (node) openNode(node)
+}
+
+async function openNode(node) {
   const me = ++token
   ctrl?.abort()
   ctrl = new AbortController()
-  const node = state.entries[i]
   clearMedia()
+  $('again').hidden = !random.active()
   $('viewer').hidden = false
   $('vmsg').hidden = true
   chrome(true)
@@ -338,6 +373,7 @@ async function openViewer(i) {
 }
 
 function closeViewer() {
+  random.end()
   token++
   ctrl?.abort()
   clearMedia()
@@ -392,6 +428,7 @@ $('viewer').addEventListener('touchend', e => {
   chrome($('viewer').classList.contains('idle'))
 }, { passive: true })
 $('close').onclick = closeViewer
+$('again').onclick = () => openNode(random.again())
 const showLoop = () => $('loop').setAttribute('aria-pressed', String(store.get('mv-loop') === '1'))
 $('loop').onclick = () => {
   store.set('mv-loop', store.get('mv-loop') === '1' ? '0' : '1')
@@ -407,12 +444,12 @@ $('viewer').addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - touch.clientX
   const dy = e.changedTouches[0].clientY - touch.clientY
   touch = null
-  if (Math.abs(dx) >= 50 && Math.abs(dx) > Math.abs(dy)) openViewer(current + (dx < 0 ? 1 : -1))
+  if (Math.abs(dx) >= 50 && Math.abs(dx) > Math.abs(dy)) step(dx < 0 ? 1 : -1)
 }, { passive: true })
 document.addEventListener('keydown', e => {
   if ($('viewer').hidden || e.target.id === 'rval') return // arrows move the cursor in the number field
-  if (e.key === 'ArrowRight') openViewer(current + 1)
-  else if (e.key === 'ArrowLeft') openViewer(current - 1)
+  if (e.key === 'ArrowRight') step(1)
+  else if (e.key === 'ArrowLeft') step(-1)
   else if (e.key === 'Escape') closeViewer()
 })
 
