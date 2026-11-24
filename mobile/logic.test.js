@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mediaKind, mimeType, collectMedia, findFolder, sortEntries, uniqueName, isNetworkError } from './logic.js'
+import { mediaKind, mimeType, collectMedia, listFolders, sortEntries, uniqueName, isNetworkError } from './logic.js'
 
 test('mediaKind', () => {
   assert.equal(mediaKind('A.JPG'), 'image')
@@ -16,15 +16,17 @@ test('collectMedia walks subfolders and skips other files', () => {
   ] }
   assert.deepEqual(collectMedia(tree).map(n => n.name), ['a.png', 'b.mp4'])
 })
-test('findFolder ignores case and spaces, only looks under root, prefers the shallowest', () => {
-  const root = { name: 'root', directory: true }, trash = { name: 'Rubbish', directory: true }
-  const mk = (name, parent) => ({ name, directory: true, parent })
-  const deep = mk('Bib', mk('x', root)), top = mk('bib ', root), trashed = mk('Bib', trash)
-  assert.equal(findFolder([trashed, deep, top], 'BIB', root), top)
-  assert.equal(findFolder([trashed, deep], 'bib', root), deep)
-  assert.equal(findFolder([trashed], 'bib', root), null)
-  assert.equal(findFolder([top, { name: 'bib', directory: false, parent: root }], 'fehlt', root), null)
-  assert.equal(findFolder([mk(null, root), top], 'bib', root), top) // undecryptable names do not crash
+test('listFolders lists nested folders with path and media count, sorted', () => {
+  const root = { children: [
+    { name: 'b2', directory: true, children: [{ name: 'x.jpg', directory: false }] },
+    { name: 'b10', directory: true, children: [
+      { name: 'Vom Handy', directory: true, children: [{ name: 'v.mov', directory: false }, { name: 'n.txt', directory: false }] },
+    ] },
+    { name: null, directory: true, children: [] },
+    { name: 'a.jpg', directory: false },
+  ] }
+  assert.deepEqual(listFolders(root).map(f => [f.path, f.count]),
+    [['?', 0], ['b2', 1], ['b10', 1], ['b10 / Vom Handy', 1]])
 })
 test('sortEntries by date (newest first) and by name (numeric)', () => {
   const n = [{ name: 'b10.jpg', timestamp: 1 }, { name: 'b2.jpg', timestamp: 3 }, { name: 'a.jpg', timestamp: 2 }]

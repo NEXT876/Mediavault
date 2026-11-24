@@ -210,17 +210,16 @@ upload photos and videos from the phone into a `Vom Handy` subfolder.
    moved files would lose their ratings.
 2. On the iPhone, open <https://next876.github.io/Mediavault/mobile/> in
    Safari, tap Share, then Add to Home Screen, and start it from there.
-3. Sign in with the MEGA account and enter the folder name.
+3. Sign in with the MEGA account and pick a folder from the list.
 
-- Only configs whose folder is synced with MEGA are visible on the phone.
+- Any folder in the MEGA Cloud Drive can be opened, also one without a
+  MediaVault config; only folders synced with a config reach MediaVault.
 - Uploads appear on the PC once the MEGA app has synced, the next time
   MediaVault starts (AI-mode configs only sync on request).
 - The password is never stored on the phone, only the session. "Abmelden"
   removes the session and all cached files.
 - The stored session gives full access to the MEGA account: treat the phone
   like a logged-in MEGA app. "Abmelden" ends it.
-- The folder must be inside the MEGA Cloud Drive (not in the rubbish bin or
-  a share).
 
 ## Project structure
 

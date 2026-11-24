@@ -1,5 +1,5 @@
 import { login, restoreSession, logout, getFile, cachedThumb, makeThumb, upload, epoch } from './mega.js'
-import { mediaKind, collectMedia, findFolder, sortEntries, isNetworkError } from './logic.js'
+import { mediaKind, collectMedia, listFolders, sortEntries, isNetworkError } from './logic.js'
 
 const $ = id => document.getElementById(id)
 const store = {
@@ -27,19 +27,26 @@ async function start() {
 }
 
 function afterLogin() {
-  const name = store.get('mv-folder')
-  if (name) openFolder(name)
-  else show('s-folder')
+  const saved = state.storage.files[store.get('mv-folder')]
+  saved?.directory ? openFolder(saved) : showFolders()
 }
 
-function openFolder(name) {
-  const folder = findFolder(Object.values(state.storage.files), name, state.storage.root)
-  if (!folder) {
-    $('folder-msg').textContent = `Ordner „${name}“ nicht gefunden.`
-    show('s-folder')
-    return
-  }
-  store.set('mv-folder', name)
+// Any MEGA folder can be opened, with or without a MediaVault config behind it.
+function showFolders() {
+  const root = state.storage.root
+  const items = [{ node: root, path: 'Alles (Cloud Drive)', count: collectMedia(root).length }, ...listFolders(root)]
+  $('folder-list').replaceChildren(...items.map(({ node, path, count }) => {
+    const b = document.createElement('button')
+    b.className = 'folder'
+    b.append(path, Object.assign(document.createElement('span'), { textContent: `${count} Dateien` }))
+    b.onclick = () => openFolder(node)
+    return b
+  }))
+  show('s-folder')
+}
+
+function openFolder(folder) {
+  store.set('mv-folder', folder.nodeId)
   state.folder = folder
   show('s-lib')
   renderGrid()
@@ -191,12 +198,14 @@ async function openViewer(i) {
       el = document.createElement('video')
       el.controls = true
       el.playsInline = true
+      el.preload = 'auto'
       el.onerror = () => { if (!el.isConnected) return; $('vmsg').textContent = 'Dieses Format kann das iPhone nicht abspielen.'; $('vmsg').hidden = false }
     } else {
       el = new Image()
       el.alt = node.name
     }
-    el.src = viewUrl
+    // '#t=0.001' makes iOS show the first frame instead of a black box before play is tapped
+    el.src = el.tagName === 'VIDEO' ? viewUrl + '#t=0.001' : viewUrl
     $('vmedia').replaceChildren(el)
     $('vprog').hidden = true
     if (el.tagName === 'VIDEO') {
@@ -264,12 +273,7 @@ $('login-form').onsubmit = async e => {
     btn.disabled = false
   }
 }
-$('folder-form').onsubmit = e => {
-  e.preventDefault()
-  $('folder-msg').textContent = ''
-  openFolder($('folder-name').value)
-}
-$('change-folder').onclick = () => { $('folder-msg').textContent = ''; show('s-folder') }
+$('change-folder').onclick = showFolders
 $('sort').onclick = () => {
   store.set('mv-sort', (store.get('mv-sort') || 'date') === 'date' ? 'name' : 'date')
   renderGrid()

@@ -22,17 +22,19 @@ export function collectMedia(folder) {
     n.directory ? collectMedia(n) : mediaKind(n.name) ? [n] : [])
 }
 
-// Only folders under root count (not Rubbish Bin, Inbox, shares); the least nested match wins.
-export function findFolder(nodes, name, root) {
-  const want = name.trim().toLowerCase()
-  const depth = n => { let d = 0; for (let p = n; p; p = p.parent, d++) if (p === root) return d; return -1 }
-  let best = null, bestDepth = Infinity
-  for (const n of nodes) {
-    if (!n.directory || (n.name ?? '').trim().toLowerCase() !== want) continue
-    const d = depth(n)
-    if (d >= 0 && d < bestDepth) [best, bestDepth] = [n, d]
+// Every folder under root (Cloud Drive, so not Rubbish Bin/Inbox/shares) with its path and media count.
+export function listFolders(root) {
+  const out = []
+  const walk = (dir, prefix) => {
+    for (const n of dir.children ?? []) {
+      if (!n.directory) continue
+      const path = prefix + (n.name ?? '?')
+      out.push({ node: n, path, count: collectMedia(n).length })
+      walk(n, path + ' / ')
+    }
   }
-  return best
+  walk(root, '')
+  return out.sort((a, b) => a.path.localeCompare(b.path, 'de', { numeric: true, sensitivity: 'base' }))
 }
 
 const byName = (a, b) => a.name.localeCompare(b.name, 'de', { numeric: true, sensitivity: 'base' })

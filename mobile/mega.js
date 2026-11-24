@@ -100,11 +100,13 @@ async function drawable(node, blob) {
     await new Promise((resolve, reject) => {
       timer = setTimeout(() => reject(new Error('video thumbnail timeout')), 10000)
       video.onerror = () => reject(new Error('video load failed'))
-      video.onloadedmetadata = () => {
+      // iOS decodes no frame of a never-played video, so the canvas stays black: play (muted) once, then seek
+      video.onloadedmetadata = () => video.play().catch(() => {}).then(() => {
+        video.pause()
         try {
           video.currentTime = Number.isFinite(video.duration) ? Math.min(2, video.duration / 2) : 0
         } catch (e) { reject(e) }
-      }
+      })
       video.onseeked = resolve
       video.src = url
     })

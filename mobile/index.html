@@ -20,6 +20,8 @@
   input, button { font:inherit; width:100%; padding:12px; margin:4px 0; border-radius:8px; border:1px solid #444; background:#222; color:var(--fg); }
   .check { display:flex; align-items:center; gap:8px; margin:4px 0; color:var(--mut); }
   .check input { width:auto; margin:0; }
+  .folder { display:flex; justify-content:space-between; gap:8px; text-align:left; background:#222; color:var(--fg); font-weight:400; }
+  .folder span { color:var(--mut); white-space:nowrap; }
   button { background:var(--acc); color:#000; border:0; font-weight:600; }
   button.sec { background:#333; color:var(--fg); }
   .msg { color:var(--bad); min-height:1.4em; }
@@ -69,12 +71,8 @@
   <p class="msg" id="login-msg"></p>
 </section>
 <section id="s-folder" hidden>
-  <h1>Bibliotheksordner</h1>
-  <form id="folder-form">
-    <input id="folder-name" type="text" placeholder="Ordnername in MEGA" autocapitalize="off" required>
-    <button type="submit">Öffnen</button>
-  </form>
-  <p class="msg" id="folder-msg"></p>
+  <h1>Ordner wählen</h1>
+  <div id="folder-list"></div>
 </section>
 <section id="s-lib" hidden style="padding:0">
   <header>
