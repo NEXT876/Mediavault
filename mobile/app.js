@@ -155,8 +155,13 @@ async function openViewer(i) {
     el.src = viewUrl
     $('vmedia').replaceChildren(el)
     $('vprog').hidden = true
-    if (el.tagName === 'VIDEO' && !(await cachedThumb(node))) {
-      makeThumb(node, blob).then(t => { if (state.tiles.get(node)?.isConnected) setThumb(state.tiles.get(node), t) }, () => {})
+    if (el.tagName === 'VIDEO') {
+      try { // a failing thumbnail must not hide the shown video
+        if (!(await cachedThumb(node))) {
+          const t = await makeThumb(node, blob)
+          if (state.tiles.get(node)?.isConnected) setThumb(state.tiles.get(node), t)
+        }
+      } catch {}
     }
   } catch {
     if (me !== token) return
@@ -174,7 +179,7 @@ function closeViewer() {
 
 $('close').onclick = closeViewer
 let touch = null
-$('viewer').addEventListener('touchstart', e => { touch = e.changedTouches[0] }, { passive: true })
+$('viewer').addEventListener('touchstart', e => { touch = e.target.closest('video') ? null : e.changedTouches[0] }, { passive: true })
 $('viewer').addEventListener('touchend', e => {
   if (!touch) return
   const dx = e.changedTouches[0].clientX - touch.clientX
@@ -214,7 +219,7 @@ $('sort').onclick = () => {
 }
 $('logout').onclick = async () => {
   if (!confirm('Abmelden und alle gespeicherten Dateien auf diesem Gerät löschen?')) return
-  await logout()
+  try { await logout() } catch (e) { console.warn('logout failed', e) }
   state.storage = state.folder = null
   show('s-login')
 }

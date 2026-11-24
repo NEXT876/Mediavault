@@ -11,7 +11,7 @@
 <title>MediaVault</title>
 <style>
   :root { color-scheme: dark; --bg:#111; --fg:#eee; --mut:#999; --bad:#e66; --acc:#4af; }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.4 -apple-system, system-ui, sans-serif;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
   [hidden] { display:none !important; }
@@ -31,11 +31,14 @@
   .tile .ph { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:4px; text-align:center; font-size:12px; color:var(--mut); word-break:break-all; overflow:hidden; }
   .tile .ph b { font-size:28px; color:var(--fg); }
-  #viewer { position:fixed; inset:0; background:#000; z-index:10; display:flex; align-items:center; justify-content:center; }
-  #viewer img, #viewer video { max-width:100%; max-height:100%; object-fit:contain; }
+  #viewer { position:fixed; inset:0; padding-bottom:env(safe-area-inset-bottom); background:#000; z-index:10; display:flex; align-items:center; justify-content:center; }
+  #viewer img, #viewer video { width:100%; height:100%; object-fit:contain; }
   #close { position:absolute; top:max(12px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right));
     width:44px; height:44px; padding:0; border-radius:22px; font-size:22px; background:#333; color:#fff; z-index:2; }
-  #vprog { position:absolute; left:0; right:0; bottom:0; height:4px; width:100%; appearance:none; border:0; }
+  #vprog { position:absolute; left:0; right:0; bottom:0; height:4px; width:100%; appearance:none; border:0; background:#333; }
+  #vprog::-webkit-progress-bar { background:#333; }
+  #vprog::-webkit-progress-value { background:#eee; }
+  #vprog::-moz-progress-bar { background:#eee; }
   #vmsg { position:absolute; color:var(--bad); padding:16px; text-align:center; }
 </style>
 </head>
