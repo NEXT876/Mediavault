@@ -40,6 +40,9 @@
   #viewer img, #viewer video { width:100%; height:100%; object-fit:contain; }
   #close { position:absolute; top:max(12px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right));
     width:44px; height:44px; padding:0; border-radius:22px; font-size:22px; background:#333; color:#fff; z-index:2; }
+  #loop { position:absolute; top:max(12px, env(safe-area-inset-top)); left:max(12px, env(safe-area-inset-left));
+    width:auto; height:44px; padding:0 14px; border-radius:22px; background:#333; color:#fff; z-index:2; font-weight:400; }
+  #loop[aria-pressed="true"] { background:var(--acc); color:#000; }
   #vprog { position:absolute; left:0; right:0; bottom:0; height:4px; width:100%; appearance:none; border:0; background:#333; }
   #vprog::-webkit-progress-bar { background:#333; }
   #vprog::-webkit-progress-value { background:#eee; }
@@ -48,7 +51,7 @@
   #uprog::-webkit-progress-bar { background:#333; }
   #uprog::-webkit-progress-value { background:#eee; }
   #uprog::-moz-progress-bar { background:#eee; }
-  #vmsg { position:absolute; color:var(--bad); padding:16px; text-align:center; white-space:pre-line; font-size:14px; }
+  #vmsg { position:absolute; color:var(--bad); padding:16px; text-align:center; }
 </style>
 </head>
 <body>
@@ -90,6 +93,7 @@
 </section>
 <div id="viewer" hidden>
   <button id="close" aria-label="Schließen">✕</button>
+  <button id="loop" aria-pressed="false" hidden>↻ Wiederholen</button>
   <div id="vmedia" style="display:contents"></div>
   <progress id="vprog" max="1" value="0"></progress>
   <p id="vmsg" hidden></p>

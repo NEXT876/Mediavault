@@ -187,6 +187,7 @@ async function openViewer(i) {
   clearMedia()
   $('viewer').hidden = false
   $('vmsg').hidden = true
+  $('loop').hidden = mediaKind(node.name) !== 'video'
   $('vprog').hidden = false
   $('vprog').value = 0
   try {
@@ -198,15 +199,9 @@ async function openViewer(i) {
       el = document.createElement('video')
       el.controls = true
       el.playsInline = true
+      el.loop = store.get('mv-loop') === '1' // native loop restarts without a gap
       el.preload = 'auto'
-      el.onerror = async () => {
-        if (!el.isConnected) return
-        // DIAG: temporary details for the iOS video bug
-        const head = [...new Uint8Array(await blob.slice(0, 12).arrayBuffer())].map(b => b.toString(16).padStart(2, '0')).join(' ')
-        $('vmsg').textContent = 'Dieses Format kann das iPhone nicht abspielen.\n' +
-          `[code ${el.error?.code} ${el.error?.message || ''} | Blob ${blob.size}/${node.size} B, ${blob.type || 'kein Typ'}, Cache ${blob.fromCache ? 'ja' : 'nein'} | ${head}]`
-        $('vmsg').hidden = false
-      }
+      el.onerror = () => { if (!el.isConnected) return; $('vmsg').textContent = 'Dieses Format kann das iPhone nicht abspielen.'; $('vmsg').hidden = false }
     } else {
       el = new Image()
       el.alt = node.name
@@ -241,6 +236,14 @@ function closeViewer() {
 }
 
 $('close').onclick = closeViewer
+const showLoop = () => $('loop').setAttribute('aria-pressed', String(store.get('mv-loop') === '1'))
+$('loop').onclick = () => {
+  store.set('mv-loop', store.get('mv-loop') === '1' ? '0' : '1')
+  showLoop()
+  const v = $('vmedia').querySelector('video')
+  if (v) v.loop = store.get('mv-loop') === '1'
+}
+showLoop()
 let touch = null
 $('viewer').addEventListener('touchstart', e => { touch = (e.target.closest('video') && e.changedTouches[0].clientY > innerHeight - 120) ? null : e.changedTouches[0] }, { passive: true })
 $('viewer').addEventListener('touchend', e => {
