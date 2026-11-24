@@ -1,4 +1,4 @@
-import { login, restoreSession, logout, getFile, cachedThumb, makeThumb, upload } from './mega.js'
+import { login, restoreSession, logout, getFile, cachedThumb, makeThumb, upload, epoch } from './mega.js'
 import { mediaKind, collectMedia, findFolder, sortEntries } from './logic.js'
 
 const $ = id => document.getElementById(id)
@@ -32,7 +32,7 @@ function afterLogin() {
 }
 
 function openFolder(name) {
-  const folder = findFolder(Object.values(state.storage.files), name)
+  const folder = findFolder(Object.values(state.storage.files), name, state.storage.root)
   if (!folder) {
     $('folder-msg').textContent = `Ordner „${name}“ nicht gefunden.`
     show('s-folder')
@@ -89,7 +89,10 @@ async function loadTile(tile) {
     const cached = await cachedThumb(node)
     if (cached) return setThumb(tile, cached)
     if (mediaKind(node.name) === 'video') return placeholder(tile, '▶')
-    setThumb(tile, await makeThumb(node, await getFile(node)))
+    const e = epoch()
+    const blob = await getFile(node)
+    if (e !== epoch()) return // logged out meanwhile: do not refill the caches
+    setThumb(tile, await makeThumb(node, blob))
   } catch {
     placeholder(tile, '⚠')
   }
@@ -158,6 +161,7 @@ $('pick').onchange = async () => {
 let current = -1
 let viewUrl = null
 let token = 0
+let ctrl = null // aborts the download of the item the viewer left
 
 function clearMedia() {
   $('vmedia').replaceChildren()
@@ -169,6 +173,8 @@ async function openViewer(i) {
   if (i < 0 || i >= state.entries.length) return
   current = i
   const me = ++token
+  ctrl?.abort()
+  ctrl = new AbortController()
   const node = state.entries[i]
   clearMedia()
   $('viewer').hidden = false
@@ -176,7 +182,7 @@ async function openViewer(i) {
   $('vprog').hidden = false
   $('vprog').value = 0
   try {
-    const blob = await getFile(node, (l, t) => { if (me === token) $('vprog').value = t ? l / t : 0 })
+    const blob = await getFile(node, (l, t) => { if (me === token) $('vprog').value = t ? l / t : 0 }, ctrl.signal)
     if (me !== token) return
     viewUrl = URL.createObjectURL(blob)
     let el
@@ -184,6 +190,7 @@ async function openViewer(i) {
       el = document.createElement('video')
       el.controls = true
       el.playsInline = true
+      el.onerror = () => { $('vmsg').textContent = 'Dieses Format kann das iPhone nicht abspielen.'; $('vmsg').hidden = false }
     } else {
       el = new Image()
       el.alt = node.name
@@ -199,8 +206,8 @@ async function openViewer(i) {
         }
       } catch {}
     }
-  } catch {
-    if (me !== token) return
+  } catch (e) {
+    if (me !== token || e?.name === 'AbortError') return
     $('vprog').hidden = true
     $('vmsg').textContent = 'Konnte die Datei nicht laden.'
     $('vmsg').hidden = false
@@ -209,13 +216,14 @@ async function openViewer(i) {
 
 function closeViewer() {
   token++
+  ctrl?.abort()
   clearMedia()
   $('viewer').hidden = true
 }
 
 $('close').onclick = closeViewer
 let touch = null
-$('viewer').addEventListener('touchstart', e => { touch = e.target.closest('video') ? null : e.changedTouches[0] }, { passive: true })
+$('viewer').addEventListener('touchstart', e => { touch = (e.target.closest('video') && e.changedTouches[0].clientY > innerHeight - 120) ? null : e.changedTouches[0] }, { passive: true })
 $('viewer').addEventListener('touchend', e => {
   if (!touch) return
   const dx = e.changedTouches[0].clientX - touch.clientX
@@ -232,15 +240,26 @@ document.addEventListener('keydown', e => {
 
 // ---- forms and buttons ----
 $('retry').onclick = start
+function loginError(err) {
+  const m = err?.message || String(err)
+  if (err instanceof TypeError) return 'Keine Verbindung.'
+  if (/ENOENT|EKEY|invalid/i.test(m)) return 'E-Mail oder Passwort falsch.'
+  if (/EMFAREQUIRED/.test(m)) return 'Bitte 2FA-Code eingeben.'
+  return m
+}
 $('login-form').onsubmit = async e => {
   e.preventDefault()
   $('login-msg').textContent = ''
+  const btn = $('login-form').querySelector('button')
+  btn.disabled = true
   try {
     state.storage = await login($('email').value.trim(), $('password').value, $('code').value.trim())
     $('password').value = ''
     afterLogin()
   } catch (err) {
-    $('login-msg').textContent = err.message || String(err)
+    $('login-msg').textContent = loginError(err)
+  } finally {
+    btn.disabled = false
   }
 }
 $('folder-form').onsubmit = e => {
@@ -253,11 +272,24 @@ $('sort').onclick = () => {
   store.set('mv-sort', (store.get('mv-sort') || 'date') === 'date' ? 'name' : 'date')
   renderGrid()
 }
-$('logout').onclick = async () => {
+async function doLogout() {
   if (!confirm('Abmelden und alle gespeicherten Dateien auf diesem Gerät löschen?')) return
+  // stop work that would refill the caches
+  queue.length = 0
+  observer.disconnect()
+  ctrl?.abort()
+  try { await state.storage?.close?.() } catch {}
   try { await logout() } catch (e) { console.warn('logout failed', e) }
   state.storage = state.folder = null
   show('s-login')
 }
+$('logout').onclick = $('offline-logout').onclick = doLogout
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || $('s-lib').hidden || !$('viewer').hidden || !state.storage) return
+  try { await state.storage.reload(true) } catch {}
+  // reload rebuilds the node objects, so look the folder up again
+  state.folder = findFolder(Object.values(state.storage.files), store.get('mv-folder') || '', state.storage.root) || state.folder
+  renderGrid()
+})
 
 start()

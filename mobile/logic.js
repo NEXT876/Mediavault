@@ -22,10 +22,17 @@ export function collectMedia(folder) {
     n.directory ? collectMedia(n) : mediaKind(n.name) ? [n] : [])
 }
 
-export function findFolder(nodes, name) {
+// Only folders under root count (not Rubbish Bin, Inbox, shares); the least nested match wins.
+export function findFolder(nodes, name, root) {
   const want = name.trim().toLowerCase()
-  for (const n of nodes) if (n.directory && n.name.trim().toLowerCase() === want) return n
-  return null
+  const depth = n => { let d = 0; for (let p = n; p; p = p.parent, d++) if (p === root) return d; return -1 }
+  let best = null, bestDepth = Infinity
+  for (const n of nodes) {
+    if (!n.directory || n.name.trim().toLowerCase() !== want) continue
+    const d = depth(n)
+    if (d >= 0 && d < bestDepth) [best, bestDepth] = [n, d]
+  }
+  return best
 }
 
 const byName = (a, b) => a.name.localeCompare(b.name, 'de', { numeric: true, sensitivity: 'base' })

@@ -217,6 +217,10 @@ upload photos and videos from the phone into a `Vom Handy` subfolder.
   MediaVault starts (AI-mode configs only sync on request).
 - The password is never stored on the phone, only the session. "Abmelden"
   removes the session and all cached files.
+- The stored session gives full access to the MEGA account: treat the phone
+  like a logged-in MEGA app. "Abmelden" ends it.
+- The folder must be inside the MEGA Cloud Drive (not in the rubbish bin or
+  a share).
 
 ## Project structure
 

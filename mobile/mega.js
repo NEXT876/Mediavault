@@ -3,6 +3,7 @@ import { UPLOAD_FOLDER, mediaKind, mimeType, uniqueName } from './logic.js'
 
 const THUMB_EDGE = 300
 let persisted = false
+let generation = 0 // bumped by logout(): in-flight cache writes of an older generation are dropped
 
 function persistOnce() {
   if (persisted) return
@@ -26,13 +27,20 @@ export async function restoreSession() {
     persistOnce()
     return storage
   } catch (e) {
-    if (e instanceof TypeError) throw e // offline (fetch TypeError): keep the session, UI shows "Keine Verbindung"
-    localStorage.removeItem('mv-session')
-    return null
+    // megajs errors are plain Errors with the code in the message; only a dead session is dropped,
+    // everything else (offline, EAGAIN, ...) keeps it and lets the UI show the retry screen
+    if (/ESID|EACCESS/.test(e?.message)) {
+      localStorage.removeItem('mv-session')
+      return null
+    }
+    throw e
   }
 }
 
+export const epoch = () => generation // lets callers notice a logout between two steps
+
 export async function logout() {
+  generation++
   for (const k of ['mv-session', 'mv-folder', 'mv-sort']) localStorage.removeItem(k)
   await caches.delete('mv-files')
   await caches.delete('mv-thumbs')
@@ -43,28 +51,35 @@ async function cacheGet(cacheName, key) {
   return hit ? hit.blob() : null
 }
 
-async function cachePut(cacheName, key, blob) {
+async function cachePut(cacheName, key, blob, gen) {
+  if (gen !== generation) return
   try { // caching is only an optimization (iOS may throw QuotaExceededError)
-    await (await caches.open(cacheName)).put(key, new Response(blob, { headers: { 'Content-Type': blob.type } }))
+    const cache = await caches.open(cacheName)
+    if (gen !== generation) return
+    await cache.put(key, new Response(blob, { headers: { 'Content-Type': blob.type } }))
   } catch (e) {
     console.warn('cache write failed', e)
   }
 }
 
 // shortcut: whole video is held in memory; stream via partial downloads only if big videos cause trouble.
-export async function getFile(node, onProgress) {
+export async function getFile(node, onProgress, signal) {
+  const gen = generation
   const key = './f/' + node.nodeId
   const cached = await cacheGet('mv-files', key)
   if (cached) return cached
+  const aborted = () => new DOMException('Aborted', 'AbortError')
+  if (signal?.aborted) throw aborted()
   const blob = await new Promise((resolve, reject) => {
     const chunks = []
     const stream = node.download({})
+    signal?.addEventListener('abort', () => { stream.destroy?.(); reject(aborted()) }, { once: true })
     stream.on('data', c => chunks.push(c))
     stream.on('progress', p => onProgress?.(p.bytesLoaded, p.bytesTotal))
     stream.on('error', reject)
     stream.on('end', () => resolve(new Blob(chunks, { type: mimeType(node.name) })))
   })
-  await cachePut('mv-files', key, blob)
+  await cachePut('mv-files', key, blob, gen)
   return blob
 }
 
@@ -104,6 +119,7 @@ async function drawable(node, blob) {
 }
 
 export async function makeThumb(node, blob) {
+  const gen = generation
   const d = await drawable(node, blob)
   try {
     const scale = Math.min(1, THUMB_EDGE / Math.max(d.w, d.h))
@@ -113,7 +129,7 @@ export async function makeThumb(node, blob) {
     canvas.getContext('2d').drawImage(d.source, 0, 0, canvas.width, canvas.height)
     const thumb = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.8))
     if (!thumb) throw new Error('thumbnail encoding failed')
-    await cachePut('mv-thumbs', './t/' + node.nodeId, thumb)
+    await cachePut('mv-thumbs', './t/' + node.nodeId, thumb, gen)
     return thumb
   } finally {
     d.done()
@@ -121,14 +137,17 @@ export async function makeThumb(node, blob) {
 }
 
 export async function upload(folder, file, onProgress) {
+  const gen = generation
   const children = folder.children ?? []
   const target = children.find(n => n.directory && n.name === UPLOAD_FOLDER) ?? await folder.mkdir(UPLOAD_FOLDER)
   const taken = new Set((target.children ?? []).map(n => n.name.toLowerCase()))
   const name = uniqueName(file.name, taken)
+  // shortcut: the whole file is read into memory (~2x its size); stream the upload only if large videos crash.
   const up = target.upload({ name, size: file.size }, new Uint8Array(await file.arrayBuffer()))
-  up.on?.('progress', p => onProgress?.(p.bytesLoaded, p.bytesTotal))
-  const node = await up.complete
-  await cachePut('mv-files', './f/' + node.nodeId, new Blob([file], { type: mimeType(name) }))
+  up.on?.('progress', p => onProgress?.(p.bytesUploaded, p.bytesTotal))
+  // a failed transfer emits 'error' on the stream; without a listener it would throw and never settle up.complete
+  const node = await new Promise((res, rej) => { up.on?.('error', rej); up.complete.then(res, rej) })
+  await cachePut('mv-files', './f/' + node.nodeId, new Blob([file], { type: mimeType(name) }), gen)
   await makeThumb(node, file).catch(() => {}) // a failed thumbnail must not fail a finished upload
   return node
 }

@@ -16,10 +16,14 @@ test('collectMedia walks subfolders and skips other files', () => {
   ] }
   assert.deepEqual(collectMedia(tree).map(n => n.name), ['a.png', 'b.mp4'])
 })
-test('findFolder ignores case and surrounding spaces', () => {
-  const nodes = [{ name: 'MediaVault ', directory: true }, { name: 'mediavault.txt', directory: false }]
-  assert.equal(findFolder(nodes, 'mediavault').name, 'MediaVault ')
-  assert.equal(findFolder(nodes, 'fehlt'), null)
+test('findFolder ignores case and spaces, only looks under root, prefers the shallowest', () => {
+  const root = { name: 'root', directory: true }, trash = { name: 'Rubbish', directory: true }
+  const mk = (name, parent) => ({ name, directory: true, parent })
+  const deep = mk('Bib', mk('x', root)), top = mk('bib ', root), trashed = mk('Bib', trash)
+  assert.equal(findFolder([trashed, deep, top], 'BIB', root), top)
+  assert.equal(findFolder([trashed, deep], 'bib', root), deep)
+  assert.equal(findFolder([trashed], 'bib', root), null)
+  assert.equal(findFolder([top, { name: 'bib', directory: false, parent: root }], 'fehlt', root), null)
 })
 test('sortEntries by date (newest first) and by name (numeric)', () => {
   const n = [{ name: 'b10.jpg', timestamp: 1 }, { name: 'b2.jpg', timestamp: 3 }, { name: 'a.jpg', timestamp: 2 }]
