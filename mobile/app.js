@@ -111,11 +111,17 @@ function renderGrid() {
   queue.length = 0
   thumbUrls.forEach(URL.revokeObjectURL)
   thumbUrls = []
-  state.entries = sortEntries(collectMedia(state.folder), store.get('mv-sort') || 'date')
+  // two tabs like the desktop app: images and videos are never mixed in one grid
+  const all = collectMedia(state.folder)
+  const tab = store.get('mv-tab') === 'video' ? 'video' : 'image'
+  for (const k of ['image', 'video']) {
+    $('tab-' + k).textContent = `${k === 'image' ? 'Bilder' : 'Videos'} (${all.filter(n => mediaKind(n.name) === k).length})`
+    $('tab-' + k).setAttribute('aria-selected', String(k === tab))
+  }
+  state.entries = sortEntries(all.filter(n => mediaKind(n.name) === tab), store.get('mv-sort') || 'date')
   $('sort').textContent = (store.get('mv-sort') || 'date') === 'date' ? 'Neueste' : 'Name'
-  const empty = !state.entries.length
-  $('lib-msg').hidden = $('change-folder').hidden = !empty
-  $('lib-msg').textContent = empty ? 'Keine Bilder oder Videos in diesem Ordner.' : ''
+  $('lib-msg').hidden = state.entries.length > 0
+  $('lib-msg').textContent = `Keine ${tab === 'image' ? 'Bilder' : 'Videos'} in diesem Ordner.`
   state.tiles = new Map()
   $('grid').replaceChildren(...state.entries.map((node, i) => {
     const tile = document.createElement('button')
@@ -335,6 +341,7 @@ $('login-form').onsubmit = async e => {
   }
 }
 $('change-folder').onclick = showFolders
+for (const k of ['image', 'video']) $('tab-' + k).onclick = () => { store.set('mv-tab', k); renderGrid(); scrollTo(0, 0) }
 $('sort').onclick = () => {
   store.set('mv-sort', (store.get('mv-sort') || 'date') === 'date' ? 'name' : 'date')
   renderGrid()
