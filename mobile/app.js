@@ -61,25 +61,35 @@ function openFolder(folder) {
   store.set('mv-folder', folder.nodeId)
   state.folder = folder
   state.lib = undefined
-  for (const e of document.querySelectorAll('.fname')) e.textContent = folder.name
+  renderMore()
+  for (const e of document.querySelectorAll('.fname')) e.textContent = folder === state.storage.root ? 'Alles (Cloud Drive)' : folder.name
   show('s-lib')
-  showPage(store.get('mv-tab') === 'video' ? 'video' : 'image')
+  showPage(store.get('mv-tab') === 'video' ? 'video' : 'image', true)
   loadLibrary(folder) // after the grid: the export never blocks it
 }
 
 async function loadLibrary(folder) {
-  const found = findLibrary(folder)
-  const data = found && await loadExport(found.exportNode)
+  let found = null, data = null
+  try {
+    found = findLibrary(folder)
+    data = found && await loadExport(found.exportNode)
+  } catch (e) {
+    console.warn('library data lookup failed', e)
+    if (folder === state.folder) { state.lib = null; renderMore() }
+    return
+  }
   if (folder !== state.folder) return // another folder or a logout in the meantime
   state.lib = found && { root: found.root, dataDir: found.dataDir, export: data }
-  applyTheme(state.lib?.export?.theme)
+  // a data folder whose export failed to load (offline) keeps the remembered theme
+  if (!found || data) applyTheme(data?.theme)
   state.tiles.forEach(retitle)
   renderMore()
 }
 
 // ---- navigation: one markup, bottom tab bar on phones, sidebar on iPad ----
 const VIEWS = { image: 'library', video: 'library', random: 'random', wheel: 'wheel', more: 'more' }
-function showPage(page) {
+function showPage(page, force) {
+  if (page === state.page && !force) return
   state.page = page
   if (VIEWS[page] === 'library') store.set('mv-tab', page)
   for (const v of document.querySelectorAll('[data-view]')) v.hidden = v.dataset.view !== VIEWS[page]
