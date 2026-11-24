@@ -1,14 +1,26 @@
-import { login, restoreSession, logout, getFile, cachedThumb, makeThumb, upload, epoch } from './mega.js'
-import { mediaKind, collectMedia, listFolders, sortEntries, isNetworkError } from './logic.js'
+import { login, restoreSession, logout, getFile, cachedThumb, makeThumb, upload, epoch, findLibrary, loadExport } from './mega.js'
+import { mediaKind, collectMedia, listFolders, sortEntries, isNetworkError, relPath } from './logic.js'
 
 const $ = id => document.getElementById(id)
 const store = {
   get: k => { try { return localStorage.getItem(k) } catch { return null } },
   set: (k, v) => { try { localStorage.setItem(k, v) } catch {} },
 }
-// Task 4 relies on: state.storage, state.folder, state.entries, renderGrid()
-const state = { storage: null, folder: null, entries: [], tiles: new Map() }
+// Task 4 relies on: state.storage, state.folder, state.lib, state.entries, renderGrid()
+// state.lib: undefined while loading, null without MediaVault data, else { root, dataDir, export }
+const state = { storage: null, folder: null, lib: null, page: 'image', entries: [], tiles: new Map() }
 let thumbUrls = []
+
+// ---- theme (palettes live in index.html) ----
+const THEMES = { dark: 'Dunkel', light: 'Hell', neon: 'Neon' }
+function applyTheme(name) {
+  const theme = Object.hasOwn(THEMES, name) ? name : 'dark'
+  document.documentElement.dataset.theme = theme
+  store.set('mv-theme', theme) // the next start shows it before the export is loaded
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
+  document.querySelector('meta[name="theme-color"]').content = bg
+}
+applyTheme(store.get('mv-theme'))
 
 function show(id) {
   for (const s of ['s-start', 's-offline', 's-login', 's-folder', 's-lib']) $(s).hidden = s !== id
@@ -37,7 +49,7 @@ function showFolders() {
   const items = [{ node: root, path: 'Alles (Cloud Drive)', count: collectMedia(root).length }, ...listFolders(root)]
   $('folder-list').replaceChildren(...items.map(({ node, path, count }) => {
     const b = document.createElement('button')
-    b.className = 'folder'
+    b.className = 'btn folder'
     b.append(path, Object.assign(document.createElement('span'), { textContent: `${count} Dateien` }))
     b.onclick = () => openFolder(node)
     return b
@@ -48,8 +60,52 @@ function showFolders() {
 function openFolder(folder) {
   store.set('mv-folder', folder.nodeId)
   state.folder = folder
+  state.lib = undefined
+  for (const e of document.querySelectorAll('.fname')) e.textContent = folder.name
   show('s-lib')
-  renderGrid()
+  showPage(store.get('mv-tab') === 'video' ? 'video' : 'image')
+  loadLibrary(folder) // after the grid: the export never blocks it
+}
+
+async function loadLibrary(folder) {
+  const found = findLibrary(folder)
+  const data = found && await loadExport(found.exportNode)
+  if (folder !== state.folder) return // another folder or a logout in the meantime
+  state.lib = found && { root: found.root, dataDir: found.dataDir, export: data }
+  applyTheme(state.lib?.export?.theme)
+  state.tiles.forEach(retitle)
+  renderMore()
+}
+
+// ---- navigation: one markup, bottom tab bar on phones, sidebar on iPad ----
+const VIEWS = { image: 'library', video: 'library', random: 'random', wheel: 'wheel', more: 'more' }
+function showPage(page) {
+  state.page = page
+  if (VIEWS[page] === 'library') store.set('mv-tab', page)
+  for (const v of document.querySelectorAll('[data-view]')) v.hidden = v.dataset.view !== VIEWS[page]
+  for (const b of document.querySelectorAll('#nav [data-page]')) {
+    if (b.dataset.page === page) b.setAttribute('aria-current', 'page')
+    else b.removeAttribute('aria-current')
+  }
+  if (VIEWS[page] === 'library') renderGrid()
+  scrollTo(0, 0)
+}
+
+// Task 5 implements the random pick for mode normal|smart|all|allsmart|groups.
+function startRandom(mode) {}
+
+function renderMore() {
+  const data = state.lib === undefined ? 'wird geladen …' : state.lib ? 'MediaVault-Config gefunden' : 'keine MediaVault-Daten in diesem Ordner'
+  $('more-info').textContent = `Theme: ${THEMES[document.documentElement.dataset.theme]} · Daten: ${data}`
+}
+
+$('s-lib').onclick = e => {
+  const { page, action, random } = e.target.closest('[data-page], [data-action], [data-random]')?.dataset ?? {}
+  if (page) showPage(page)
+  else if (random) startRandom(random)
+  else if (action === 'upload') $('pick').click()
+  else if (action === 'folder') showFolders()
+  else if (action === 'logout') doLogout()
 }
 
 // ---- grid ----
@@ -78,17 +134,16 @@ function setThumb(tile, blob) {
   const img = new Image()
   img.alt = tile.node.name
   img.src = url
-  tile.replaceChildren(img)
+  tile.thumb.replaceChildren(img)
 }
 
 function placeholder(tile, symbol) {
-  tile.innerHTML = ''
   const ph = document.createElement('div')
   ph.className = 'ph'
   const b = document.createElement('b')
   b.textContent = symbol
   ph.append(b, tile.node.name)
-  tile.append(ph)
+  tile.thumb.replaceChildren(ph)
 }
 
 async function loadTile(tile) {
@@ -106,20 +161,23 @@ async function loadTile(tile) {
   }
 }
 
+const retitle = tile => {
+  const items = state.lib?.export?.items
+  tile.ttl.textContent = items?.[relPath(tile.node, state.lib.root)]?.title || tile.node.name.replace(/\.[^.]+$/, '')
+}
+
 function renderGrid() {
   observer.disconnect()
   queue.length = 0
   thumbUrls.forEach(URL.revokeObjectURL)
   thumbUrls = []
-  // two tabs like the desktop app: images and videos are never mixed in one grid
-  const all = collectMedia(state.folder)
+  // images and videos are never mixed in one grid, like the desktop app
   const tab = store.get('mv-tab') === 'video' ? 'video' : 'image'
-  for (const k of ['image', 'video']) {
-    $('tab-' + k).textContent = `${k === 'image' ? 'Bilder' : 'Videos'} (${all.filter(n => mediaKind(n.name) === k).length})`
-    $('tab-' + k).setAttribute('aria-selected', String(k === tab))
-  }
-  state.entries = sortEntries(all.filter(n => mediaKind(n.name) === tab), store.get('mv-sort') || 'date')
-  $('sort').textContent = (store.get('mv-sort') || 'date') === 'date' ? 'Neueste' : 'Name'
+  const sort = store.get('mv-sort') === 'name' ? 'name' : 'date'
+  state.entries = sortEntries(collectMedia(state.folder).filter(n => mediaKind(n.name) === tab), sort)
+  $('lib-title').textContent = tab === 'image' ? '🖼️ Bilder' : '🎬 Videos'
+  $('lib-count').textContent = state.entries.length
+  $('sort').value = sort
   $('lib-msg').hidden = state.entries.length > 0
   $('lib-msg').textContent = `Keine ${tab === 'image' ? 'Bilder' : 'Videos'} in diesem Ordner.`
   state.tiles = new Map()
@@ -128,6 +186,13 @@ function renderGrid() {
     tile.className = 'tile'
     tile.node = node
     tile.setAttribute('aria-label', node.name)
+    const part = (cls, tag = 'span') => Object.assign(document.createElement(tag), { className: cls })
+    tile.thumb = part('thumb')
+    tile.ttl = part('ttl')
+    const badge = part('badge') // Task 4 fills badge and group
+    badge.hidden = true
+    tile.append(tile.thumb, tile.ttl, badge, part('grp'))
+    retitle(tile)
     tile.onclick = () => openViewer(i)
     state.tiles.set(node, tile)
     observer.observe(tile)
@@ -136,7 +201,6 @@ function renderGrid() {
 }
 
 // ---- upload ----
-$('upload').onclick = () => $('pick').click()
 $('pick').onchange = async () => {
   const files = [...$('pick').files]
   $('pick').value = ''
@@ -145,7 +209,8 @@ $('pick').onchange = async () => {
   const skipped = files.filter(f => !mediaKind(f.name)).map(f => f.name)
   const failed = []
   const msg = $('up-msg'), prog = $('uprog')
-  $('upload').disabled = true
+  const ups = document.querySelectorAll('[data-action="upload"]')
+  ups.forEach(b => { b.disabled = true })
   msg.hidden = prog.hidden = false
   try {
     for (const [i, f] of ok.entries()) {
@@ -160,14 +225,14 @@ $('pick').onchange = async () => {
     }
   } finally {
     prog.hidden = true
-    $('upload').disabled = false
+    ups.forEach(b => { b.disabled = false })
   }
   const parts = []
   if (skipped.length) parts.push(`Übersprungen (Format kennt MediaVault nicht): ${skipped.join(', ')}`)
   if (failed.length) parts.push(`Fehlgeschlagen: ${failed.join(', ')}`)
   msg.textContent = parts.join('. ')
   msg.hidden = !parts.length
-  msg.style.color = failed.length ? 'var(--bad)' : ''
+  msg.classList.toggle('err', failed.length > 0)
   renderGrid()
 }
 
@@ -340,10 +405,8 @@ $('login-form').onsubmit = async e => {
     btn.disabled = false
   }
 }
-$('change-folder').onclick = showFolders
-for (const k of ['image', 'video']) $('tab-' + k).onclick = () => { store.set('mv-tab', k); renderGrid(); scrollTo(0, 0) }
-$('sort').onclick = () => {
-  store.set('mv-sort', (store.get('mv-sort') || 'date') === 'date' ? 'name' : 'date')
+$('sort').onchange = () => {
+  store.set('mv-sort', $('sort').value)
   renderGrid()
 }
 async function doLogout() {
@@ -354,8 +417,8 @@ async function doLogout() {
   ctrl?.abort()
   try { await state.storage?.close?.() } catch {}
   try { await logout() } catch (e) { console.warn('logout failed', e) }
-  state.storage = state.folder = null
+  state.storage = state.folder = state.lib = null
   show('s-login')
 }
-$('logout').onclick = $('offline-logout').onclick = doLogout
+$('offline-logout').onclick = doLogout
 start()

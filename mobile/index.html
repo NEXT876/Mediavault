@@ -6,39 +6,131 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MediaVault">
+<meta name="theme-color" content="#1f2228">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.json">
 <title>MediaVault</title>
+<script>try { document.documentElement.dataset.theme = localStorage.getItem('mv-theme') || 'dark' } catch {} // before first paint: no flash</script>
 <style>
-  :root { color-scheme: dark; --bg:#111; --fg:#eee; --mut:#999; --bad:#e66; --acc:#4af; }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.4 -apple-system, system-ui, sans-serif;
-    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  /* palettes copied from mediavault/gui/theme.py (PALETTES); an unknown theme name falls back to dark */
+  :root, :root[data-theme="dark"] { color-scheme:dark;
+    --bg:#1f2228; --surface:#272b33; --alt:#2e333e; --hover:#363d4b; --inp:#252a32; --border:#373e4c; --text:#e6e8ec; --muted:#98a2b3;
+    --primary:#4f8cff; --pfill:#2f6be0; --pfillh:#2559c4; --pfilltext:#fff; --danger:#c93a3a; --navbg:#2c3b55; --navtext:#8ab4ff;
+    --s-high:#1e7a52; --s-mid:#8a6d0f; --s-low:#b4501f; --s-bad:#c0392b;
+    --accent:linear-gradient(#4f8cff, #4f8cff); --glow:none; }
+  :root[data-theme="light"] { color-scheme:light;
+    --bg:#f4f6fa; --surface:#fff; --alt:#eef1f6; --hover:#e8ecf2; --inp:#fff; --border:#d7dde7; --text:#1b1f24; --muted:#5b6472;
+    --primary:#2563eb; --pfill:#2563eb; --pfillh:#1d4ed8; --pfilltext:#fff; --danger:#d92d20; --navbg:#edf2ff; --navtext:#2563eb;
+    --s-high:#12805c; --s-mid:#b45309; --s-low:#c2410c; --s-bad:#d92d20;
+    --accent:linear-gradient(#2563eb, #2563eb); --glow:none; }
+  :root[data-theme="neon"] { color-scheme:dark;
+    --bg:#0b0b12; --surface:#14141d; --alt:#1a1a26; --hover:#232334; --inp:#101018; --border:#26263a; --text:#ecebf5; --muted:#8b8aa3;
+    --primary:#c084fc; --pfill:#1a1528; --pfillh:#251c3a; --pfilltext:#fff; --danger:#d42a4a; --navbg:#221a37; --navtext:#c084fc;
+    --s-high:#0d7d70; --s-mid:#7c3aed; --s-low:#db2777; --s-bad:#e11d48;
+    --accent:linear-gradient(135deg, #67e8f9, #a78bfa, #f472b6); --glow:0 0 12px rgba(255, 181, 124, .12); }
+
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", sans-serif; }
   [hidden] { display:none !important; }
-  section { padding:16px; }
-  h1 { font-size:20px; margin:0 0 12px; }
-  input, button { font:inherit; width:100%; padding:12px; margin:4px 0; border-radius:8px; border:1px solid #444; background:#222; color:var(--fg); }
-  .check { display:flex; align-items:center; gap:8px; margin:4px 0; color:var(--mut); }
-  .check input { width:auto; margin:0; }
-  .folder { display:flex; justify-content:space-between; gap:8px; text-align:left; background:#222; color:var(--fg); font-weight:400; }
-  .folder span { color:var(--mut); white-space:nowrap; }
-  button { background:var(--acc); color:#000; border:0; font-weight:600; }
-  button.sec { background:#333; color:var(--fg); }
-  .msg { color:var(--bad); min-height:1.4em; }
-  .mut { color:var(--mut); }
-  header { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 12px; position:sticky; top:0; background:var(--bg); z-index:1; }
-  header button { width:auto; margin:0; padding:8px 12px; }
-  header button:disabled { opacity:.5; }
-  header .sp { flex:1; }
-  .tabs { display:flex; gap:8px; width:100%; }
-  .tabs [role="tab"] { flex:1; background:#222; color:var(--mut); font-weight:400; }
-  .tabs [role="tab"][aria-selected="true"] { background:var(--fg); color:#000; font-weight:600; }
-  .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:2px; }
-  .tile { all:unset; position:relative; aspect-ratio:1; background:#222; overflow:hidden; display:block; cursor:pointer; }
-  .tile img { width:100%; height:100%; object-fit:cover; display:block; }
-  .tile .ph { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding:4px; text-align:center; font-size:12px; color:var(--mut); word-break:break-all; overflow:hidden; }
-  .tile .ph b { font-size:28px; color:var(--fg); }
+  button, input, select { font:inherit; color:inherit; }
+  button { background:none; border:0; padding:0; margin:0; cursor:pointer; text-align:inherit; }
+  :focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+  .mut { color:var(--muted); }
+  small, .sec { font-size:14px; }
+
+  /* desktop look: buttons radius 8, cards radius 10 */
+  .btn, .fld { min-height:44px; padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:var(--alt); color:var(--text); }
+  .fld { width:100%; margin:4px 0; background:var(--inp); }
+  select.fld { width:auto; margin:0; }
+  .btn:hover { background:var(--hover); }
+  .btn:disabled { background:transparent; color:var(--muted); cursor:default; }
+  .btn.pri { background:linear-gradient(var(--pfill), var(--pfill)) padding-box, var(--accent) border-box; border-color:transparent; color:var(--pfilltext); font-weight:600; }
+  .btn.pri:hover { background:linear-gradient(var(--pfillh), var(--pfillh)) padding-box, var(--accent) border-box; }
+  .btn.pri:disabled { background:var(--alt); color:var(--muted); }
+  .panel, .card { background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--glow); padding:16px; }
+  .card { width:calc(100% - 32px); max-width:420px; margin:max(16px, 6vh) auto; }
+  .card .btn { display:block; width:100%; margin-top:8px; text-align:center; }
+  .brand b { display:block; font-size:23px; font-weight:600; line-height:1.25; }
+  .brand small { display:block; color:var(--muted); }
+  .brand { margin-bottom:12px; }
+  .err { background:var(--danger); color:#fff; border-radius:8px; padding:8px 12px; margin:8px 0; }
+  .err:empty { display:none; }
+  .check { display:flex; align-items:center; gap:8px; margin:8px 0; color:var(--muted); }
+  .check input { width:20px; height:20px; margin:0; }
+  .card .folder { display:flex; justify-content:space-between; gap:8px; overflow-wrap:anywhere; }
+  .folder span { color:var(--muted); white-space:nowrap; }
+
+  /* app shell: one nav markup, bottom tab bar on phones, sidebar from 700px */
+  #nav { background:var(--surface); display:flex; }
+  #nav button { display:flex; align-items:center; position:relative; min-height:44px; color:var(--muted); font-weight:600; border:1px solid transparent; border-radius:8px; }
+  #nav button[aria-current] { background:var(--navbg); border-color:var(--navbg); color:var(--navtext); }
+  #nav button[aria-current]::before { content:""; position:absolute; background:var(--accent); border-radius:2px; }
+  #nav .sec { color:var(--muted); font-weight:600; text-transform:uppercase; padding:14px 0 2px 4px; }
+  main { padding:12px max(12px, env(safe-area-inset-right)) 24px 12px; min-width:0; }
+  .pagehead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 12px; min-height:44px; }
+  h2 { margin:0; font-size:20px; font-weight:600; }
+  h2 .mut { font-weight:400; font-size:16px; margin-left:4px; }
+  #up-msg { margin:0 0 12px; }
+  #uprog { display:block; width:100%; height:4px; margin-bottom:12px; appearance:none; border:0; background:var(--alt); }
+  #uprog::-webkit-progress-bar { background:var(--alt); }
+  #uprog::-webkit-progress-value { background:var(--primary); }
+  #uprog::-moz-progress-bar { background:var(--primary); }
+  .modes { display:grid; gap:8px; margin-top:12px; }
+  .modes .btn { text-align:left; }
+
+  @media (max-width:699px) {
+    #top { position:sticky; top:0; z-index:4; display:flex; align-items:center; gap:12px; background:var(--bg); border-bottom:1px solid var(--border);
+      padding:max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left)); }
+    #top .brand { flex:1; min-width:0; margin:0; }
+    #top .brand b { font-size:20px; line-height:1.2; }
+    #top .brand small { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    main { padding-left:max(12px, env(safe-area-inset-left)); padding-bottom:calc(88px + env(safe-area-inset-bottom)); }
+    #nav { position:fixed; left:0; right:0; bottom:0; z-index:5; border-top:1px solid var(--border);
+      padding:6px max(6px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); }
+    #nav button { flex:1; min-width:0; flex-direction:column; justify-content:center; gap:0; padding:4px 2px; font-size:14px; line-height:1.2; }
+    #nav button i { font-size:22px; font-style:normal; line-height:1.3; }
+    #nav button[aria-current]::before { top:-1px; left:25%; right:25%; height:3px; }
+    #nav .w { display:none; }
+  }
+  @media (min-width:700px) {
+    #top, #nav .n { display:none; }
+    #s-lib:not([hidden]) { display:grid; grid-template-columns:calc(240px + env(safe-area-inset-left)) minmax(0, 1fr); align-items:start; }
+    #nav { position:sticky; top:0; height:100vh; height:100dvh; overflow-y:auto; flex-direction:column; gap:2px; border-right:1px solid var(--border);
+      padding:16px 12px max(16px, env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left)); }
+    #nav .brand { padding:0 4px; }
+    #nav button { gap:10px; padding:9px 12px; text-align:left; }
+    #nav button:hover:not([aria-current]) { background:var(--hover); color:var(--text); }
+    #nav button[aria-current]::before { left:-1px; top:20%; bottom:20%; width:3px; }
+    #nav button i { font-style:normal; min-width:1.4em; text-align:center; white-space:nowrap; }
+    main { padding:16px max(20px, env(safe-area-inset-right)) 24px 20px; }
+    h2 { font-size:23px; }
+  }
+
+  /* grid: phone = 3 square thumbnails, wide = desktop-like cards with caption */
+  .grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; }
+  .tile { position:relative; display:grid; grid-template-columns:1fr auto; align-content:start; gap:4px; min-width:0;
+    background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--glow); overflow:hidden; }
+  .thumb { grid-column:1 / -1; position:relative; aspect-ratio:1; overflow:hidden; background:var(--alt); border-radius:9px; }
+  .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .ph { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:4px; text-align:center; font-size:12px; color:var(--muted); word-break:break-all; overflow:hidden; }
+  .ph b { font-size:28px; color:var(--text); }
+  .ttl { grid-column:1 / -1; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .grp { color:var(--muted); text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .badge { justify-self:start; padding:2px 8px; border-radius:9px; font-size:14px; font-weight:600; color:#fff; background:var(--s-bad); }
+  .badge[data-tier="high"] { background:var(--s-high); }
+  .badge[data-tier="mid"] { background:var(--s-mid); }
+  .badge[data-tier="low"] { background:var(--s-low); }
+  @media (max-width:699px) {
+    .ttl, .grp { display:none; }
+    .badge { position:absolute; left:6px; bottom:6px; }
+  }
+  @media (min-width:700px) {
+    .grid { grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px; }
+    .tile { padding:8px; }
+    .thumb { border-radius:6px; }
+  }
+
   #viewer { position:fixed; inset:0; padding-bottom:env(safe-area-inset-bottom); background:#000; z-index:10; display:flex; align-items:center; justify-content:center; }
   #viewer img, #viewer video { width:100%; height:100%; object-fit:contain; }
   #close { position:absolute; top:max(12px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right));
@@ -54,7 +146,7 @@
   #vbar button { width:44px; height:44px; padding:0; margin:0; border-radius:22px; background:none; color:#fff; font-weight:400; font-size:15px; }
   #vplay { font-size:26px !important; }
   #loop { font-size:22px !important; color:rgba(255,255,255,.55) !important; position:absolute; right:max(16px, env(safe-area-inset-right)); }
-  #loop[aria-pressed="true"] { color:var(--acc) !important; }
+  #loop[aria-pressed="true"] { color:var(--primary) !important; }
   #vseek { flex:1; width:auto; margin:0; padding:0; height:28px; border:0; background:none; -webkit-appearance:none; appearance:none; }
   #vseek::-webkit-slider-runnable-track { height:4px; border-radius:2px;
     background:linear-gradient(to right, #fff var(--p, 0%), rgba(255,255,255,.35) var(--p, 0%)); }
@@ -65,54 +157,95 @@
   #vprog::-webkit-progress-bar { background:#333; }
   #vprog::-webkit-progress-value { background:#eee; }
   #vprog::-moz-progress-bar { background:#eee; }
-  #uprog { display:block; width:100%; height:4px; appearance:none; border:0; background:#333; }
-  #uprog::-webkit-progress-bar { background:#333; }
-  #uprog::-webkit-progress-value { background:#eee; }
-  #uprog::-moz-progress-bar { background:#eee; }
-  #vmsg { position:absolute; color:var(--bad); padding:16px; text-align:center; }
+  #vmsg { position:absolute; background:var(--danger); color:#fff; border-radius:8px; margin:16px; padding:8px 12px; text-align:center; }
 </style>
 </head>
 <body>
-<section id="s-start" class="mut">Lade …</section>
-<section id="s-offline" hidden>
-  <p>Keine Verbindung.</p>
-  <p class="msg" id="offline-msg"></p>
-  <button id="retry">Erneut versuchen</button>
-  <button id="offline-logout" class="sec">Abmelden</button>
+<section id="s-start" class="mut" style="padding:16px">Lade …</section>
+<section id="s-offline" class="card" hidden>
+  <p style="margin-top:0">Keine Verbindung.</p>
+  <p class="err" id="offline-msg"></p>
+  <button id="retry" class="btn pri">Erneut versuchen</button>
+  <button id="offline-logout" class="btn">Abmelden</button>
 </section>
-<section id="s-login" hidden>
-  <h1>MediaVault</h1>
+<section id="s-login" class="card" hidden>
+  <div class="brand"><b>MediaVault</b><small>Deine Medienbibliothek</small></div>
   <form id="login-form">
-    <input id="email" type="email" placeholder="E-Mail" autocomplete="username" required>
-    <input id="password" type="password" placeholder="Passwort" autocomplete="current-password" required>
+    <input id="email" class="fld" type="email" placeholder="E-Mail" autocomplete="username" required>
+    <input id="password" class="fld" type="password" placeholder="Passwort" autocomplete="current-password" required>
     <label class="check"><input id="show-pw" type="checkbox"> Passwort anzeigen</label>
-    <input id="code" type="text" inputmode="numeric" placeholder="2FA-Code (optional)" autocomplete="one-time-code">
-    <button type="submit">Anmelden</button>
+    <input id="code" class="fld" type="text" inputmode="numeric" placeholder="2FA-Code (optional)" autocomplete="one-time-code">
+    <button type="submit" class="btn pri" style="margin-top:12px">Anmelden</button>
   </form>
-  <p class="msg" id="login-msg"></p>
+  <p class="err" id="login-msg"></p>
 </section>
-<section id="s-folder" hidden>
-  <h1>Ordner wählen</h1>
+<section id="s-folder" class="card" hidden>
+  <div class="brand"><b>MediaVault</b><small>Ordner wählen</small></div>
   <div id="folder-list"></div>
 </section>
-<section id="s-lib" hidden style="padding:0">
-  <header>
-    <button id="sort" class="sec" aria-label="Sortierung umschalten"></button>
-    <span class="sp"></span>
-    <button id="upload">Hochladen</button>
-    <button id="logout" class="sec">Abmelden</button>
-    <div class="tabs" role="tablist">
-      <button id="tab-image" role="tab">Bilder</button>
-      <button id="tab-video" role="tab">Videos</button>
-      <button id="change-folder" class="sec">Ordner</button>
-    </div>
+<div id="s-lib" hidden>
+  <header id="top">
+    <div class="brand"><b>MediaVault</b><small class="fname"></small></div>
+    <button id="upload" class="btn pri" data-action="upload">Hochladen</button>
   </header>
-  <progress id="uprog" max="1" value="0" hidden></progress>
-  <p id="up-msg" class="mut" style="padding:0 16px" hidden></p>
-  <input id="pick" type="file" accept="image/*,video/*" multiple hidden>
-  <p id="lib-msg" class="mut" style="padding:0 16px" hidden></p>
-  <div class="grid" id="grid"></div>
-</section>
+  <nav id="nav" aria-label="Hauptnavigation">
+    <div class="brand w"><b>MediaVault</b><small class="fname"></small></div>
+    <div class="sec w">Ansichten</div>
+    <button data-page="image"><i>🖼️</i>Bilder</button>
+    <button data-page="video"><i>🎬</i>Videos</button>
+    <button data-page="random" class="n"><i>🎲</i>Zufall</button>
+    <div class="sec w">Zufall</div>
+    <button class="w" data-random="normal"><i>🎲</i>Normal</button>
+    <button class="w" data-random="smart"><i>⚖️</i>Smart</button>
+    <button class="w" data-random="all"><i>🌍</i>Alles</button>
+    <button class="w" data-random="allsmart"><i>⚖️🌍</i>Alles Smart</button>
+    <button class="w" data-random="groups"><i>📂</i>Aus Gruppen</button>
+    <div class="sec w">Extras</div>
+    <button data-page="wheel"><i>🎡</i>Glücksrad</button>
+    <button class="w" data-action="folder"><i>📁</i>Ordner wechseln</button>
+    <button class="w" data-action="upload"><i>⬆️</i>Hochladen</button>
+    <button class="w" data-action="logout"><i>🚪</i>Abmelden</button>
+    <button data-page="more" class="n"><i>⋯</i>Mehr</button>
+  </nav>
+  <main>
+    <progress id="uprog" max="1" value="0" hidden></progress>
+    <p id="up-msg" class="mut" hidden></p>
+    <input id="pick" type="file" accept="image/*,video/*" multiple hidden>
+    <section data-view="library">
+      <div class="pagehead">
+        <h2><span id="lib-title"></span><span id="lib-count" class="mut"></span></h2>
+        <select id="sort" class="btn fld" aria-label="Sortierung"><option value="date">Neueste</option><option value="name">Name</option></select>
+      </div>
+      <p id="lib-msg" class="mut" hidden></p>
+      <div class="grid" id="grid"></div>
+    </section>
+    <section data-view="random" hidden>
+      <div class="pagehead"><h2>🎲 Zufall</h2></div>
+      <div class="panel">
+        <p class="mut" style="margin:0">Wähle, wie zufällig gezogen wird.</p>
+        <div class="modes">
+          <button class="btn" data-random="normal">🎲 Normal</button>
+          <button class="btn" data-random="smart">⚖️ Smart</button>
+          <button class="btn" data-random="all">🌍 Alles</button>
+          <button class="btn" data-random="allsmart">⚖️🌍 Alles Smart</button>
+          <button class="btn" data-random="groups">📂 Aus Gruppen</button>
+        </div>
+      </div>
+    </section>
+    <section data-view="wheel" hidden>
+      <div class="pagehead"><h2>🎡 Glücksrad</h2></div>
+      <div class="panel"><p class="mut" style="margin:0">Das Glücksrad folgt bald.</p></div>
+    </section>
+    <section data-view="more" hidden>
+      <div class="pagehead"><h2>⋯ Mehr</h2></div>
+      <div class="panel">
+        <button class="btn" data-action="folder" style="width:100%">📁 Ordner wechseln</button>
+        <button class="btn" data-action="logout" style="width:100%; margin-top:8px">🚪 Abmelden</button>
+        <p id="more-info" class="mut" style="margin:12px 0 0"></p>
+      </div>
+    </section>
+  </main>
+</div>
 <div id="viewer" hidden>
   <button id="close" aria-label="Schließen">✕</button>
   <div id="vbar" hidden>
