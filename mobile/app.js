@@ -130,22 +130,27 @@ $('pick').onchange = async () => {
   const msg = $('up-msg'), prog = $('uprog')
   $('upload').disabled = true
   msg.hidden = prog.hidden = false
-  for (const [i, f] of ok.entries()) {
-    msg.textContent = `Lade hoch ${i + 1}/${ok.length} …`
-    prog.value = 0
-    try {
-      await upload(state.folder, f, (l, t) => { prog.value = t ? l / t : 0 })
-    } catch {
-      failed.push(f.name)
+  try {
+    for (const [i, f] of ok.entries()) {
+      msg.textContent = `Lade hoch ${i + 1}/${ok.length} …`
+      prog.value = 0
+      try {
+        await upload(state.folder, f, (l, t) => { prog.value = t ? l / t : 0 })
+      } catch (e) {
+        console.error(f.name, e)
+        failed.push(f.name)
+      }
     }
+  } finally {
+    prog.hidden = true
+    $('upload').disabled = false
   }
-  prog.hidden = true
-  $('upload').disabled = false
   const parts = []
   if (skipped.length) parts.push(`Übersprungen (Format kennt MediaVault nicht): ${skipped.join(', ')}`)
   if (failed.length) parts.push(`Fehlgeschlagen: ${failed.join(', ')}`)
   msg.textContent = parts.join('. ')
   msg.hidden = !parts.length
+  msg.style.color = failed.length ? 'var(--bad)' : ''
   renderGrid()
 }
 
