@@ -40,11 +40,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from mediavault import library, volumes
+from mediavault import library, phone, volumes
 from mediavault.ai_meta import extract_ai_metadata
 from mediavault.config import load_configs, locate, save_configs
 from mediavault.database import MediaDatabase
 from mediavault.extras.wheel import WheelPage
+from mediavault.extras.wheel.configs import load_wheel_configs
 from mediavault.gui import file_dialogs
 from mediavault.gui.card_grid import CardGrid, LoadingLabel
 from mediavault.gui.dialogs import (
@@ -520,10 +521,17 @@ class MainWindow(QMainWindow):
 
         AI mode extracts metadata from every file, so it only syncs when the
         user asks for it. An unplugged volume simply yields no new entries:
-        the database already holds the references from the first run.
+        the database already holds the references from the first run. Also
+        exchanges data with the phone viewer (:mod:`mediavault.phone`).
         """
+        location = self._locate()
         if not self.config.is_ai:
-            library.scan(self.db, self.config.mode, self._locate())
+            library.scan(self.db, self.config.mode, location)
+        self._sync_phone(location)
+
+    def _sync_phone(self, location: LibraryRoot) -> None:
+        """Import the phone's changes and refresh its export."""
+        phone.sync(self.db, location, self.theme.name, load_wheel_configs())
 
     def _on_folder_synced(self, added: bool) -> None:
         """Record the time of a completed folder sync and show new entries."""
@@ -551,10 +559,18 @@ class MainWindow(QMainWindow):
             self._activate_config(dlg.target_db_path)
 
     def _switch_config(self) -> None:
-        """Save the current database and open the config dialog; activate its choice."""
+        """Save the current database and open the config dialog; activate its choice.
+
+        When configs were edited or deleted, the current config is reloaded even
+        if the dialog was cancelled.
+        """
         self.db.save()
         dlg = ConfigDialog(self, self.configs, self.config.db_path)
-        if not dlg.exec():
+        accepted = dlg.exec()
+        if dlg.changed and not (accepted and dlg.selected_config is not None):
+            # A stale list would bring deleted configs back on the next save.
+            self._activate_config(self.config.db_path)
+        if not accepted:
             return
         if dlg.wants_stick_setup:
             self._open_stick()
@@ -610,6 +626,7 @@ class MainWindow(QMainWindow):
             )
             event.ignore()
             return
+        self._sync_phone(self._locate())
         super().closeEvent(event)
 
     def changeEvent(self, event: QEvent) -> None:

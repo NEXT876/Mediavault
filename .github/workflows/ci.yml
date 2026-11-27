@@ -40,6 +40,8 @@ jobs:
         run: ruff check mediavault tests
       - name: Tests
         run: pytest -q --cov=mediavault
+      - name: Mobile tests
+        run: node --test mobile/*.test.js
       - name: Coverage badge
         if: github.base_ref == 'main'
         run: |

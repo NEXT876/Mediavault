@@ -1,0 +1,9 @@
+{
+  "name": "MediaVault",
+  "short_name": "MediaVault",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1f2228",
+  "theme_color": "#1f2228"
+}

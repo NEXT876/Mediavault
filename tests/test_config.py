@@ -10,6 +10,7 @@ from mediavault.config import (
     create_config,
     load_configs,
     locate,
+    name_in_use,
     save_configs,
 )
 from mediavault.models import MODE_AI, MODE_NORMAL, LibraryRoot, VaultConfig
@@ -90,6 +91,15 @@ def test_unknown_last_and_mode_fall_back(tmp_path):
 
     assert [config.mode for config in configs] == [MODE_NORMAL, MODE_AI]
     assert last == "a.json"
+
+
+def test_name_in_use_ignores_case_and_the_renamed_config():
+    first = VaultConfig("Fotos")
+    configs = [first, VaultConfig("Videos")]
+    assert name_in_use(configs, "  fotos ")
+    assert not name_in_use(configs, "Fotos", exclude=first)
+    assert name_in_use(configs, "VIDEOS", exclude=first)
+    assert not name_in_use(configs, "Neu")
 
 
 def test_create_config_makes_unique_paths(tmp_path):
