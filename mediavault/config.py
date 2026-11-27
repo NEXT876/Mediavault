@@ -171,6 +171,23 @@ def _slug(name: str) -> str:
     return slug or "config"
 
 
+def name_in_use(
+    configs: Iterable[VaultConfig], name: str, exclude: VaultConfig | None = None
+) -> bool:
+    """Return True when another config already has ``name`` (case-insensitive).
+
+    Args:
+        configs: The configs to check against.
+        name: Proposed display name; surrounding whitespace is ignored.
+        exclude: The config being renamed, so keeping its own name is allowed.
+    """
+    wanted = name.strip().casefold()
+    return any(
+        config is not exclude and config.name.casefold() == wanted
+        for config in configs
+    )
+
+
 def create_config(
     name: str,
     mode: str,

@@ -551,10 +551,18 @@ class MainWindow(QMainWindow):
             self._activate_config(dlg.target_db_path)
 
     def _switch_config(self) -> None:
-        """Save the current database and open the config dialog; activate its choice."""
+        """Save the current database and open the config dialog; activate its choice.
+
+        When configs were edited or deleted, the current config is reloaded even
+        if the dialog was cancelled.
+        """
         self.db.save()
         dlg = ConfigDialog(self, self.configs, self.config.db_path)
-        if not dlg.exec():
+        accepted = dlg.exec()
+        if dlg.changed and not (accepted and dlg.selected_config is not None):
+            # A stale list would bring deleted configs back on the next save.
+            self._activate_config(self.config.db_path)
+        if not accepted:
             return
         if dlg.wants_stick_setup:
             self._open_stick()

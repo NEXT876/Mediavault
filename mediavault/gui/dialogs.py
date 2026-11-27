@@ -6,7 +6,8 @@
   score, file paths).
 - :class:`GroupRandomDialog`: choose groups and media types for a random
   pick.
-- :class:`ConfigDialog`: switch to another config or create a new one.
+- :class:`ConfigDialog`: switch to, create, edit or delete a config.
+- :class:`EditConfigDialog`: change name, mode and folder of one config.
 - :class:`FolderPreviewDialog`: confirm files found by a folder sync.
 - :class:`AnalysisDialog`: prompt statistics of an AI config.
 
@@ -42,7 +43,7 @@ from PyQt6.QtWidgets import (
 
 from mediavault import volumes
 from mediavault.ai_meta import format_ai_meta, summarize_prompts
-from mediavault.config import create_config, locate, save_configs
+from mediavault.config import create_config, locate, name_in_use, save_configs
 from mediavault.database import MediaDatabase
 from mediavault.gui import file_dialogs
 from mediavault.gui.widgets import button, field_label, hint_label, rounded_pixmap
@@ -550,14 +551,17 @@ class ConfigDialog(QDialog):
     """Dialog to open an existing vault config or create a new one.
 
     Lists every config with its mode and location (local folder or stick with
-    its connection state). Creating a config optionally takes a local folder;
-    stick configs are handed over to :class:`StickDialog`. The configs file is
-    saved by the dialog.
+    its connection state). Existing configs can be edited or deleted; deleting
+    only removes the entry, never the database file or any media. Creating a
+    config optionally takes a local folder; stick configs are handed over to
+    :class:`StickDialog`. The configs file is saved by the dialog.
 
     Attributes:
         selected_config: Config to activate after the dialog was accepted.
         wants_stick_setup: True when the user chose "Vom Stick…"; the caller
             then opens the stick dialog.
+        changed: True when a config was edited or deleted, even if the dialog
+            was cancelled afterwards; the caller must then reload the configs.
     """
 
     def __init__(
@@ -577,6 +581,8 @@ class ConfigDialog(QDialog):
         self.configs = list(configs)
         self.selected_config: VaultConfig | None = None
         self.wants_stick_setup = False
+        self.changed = False
+        self._current_db_path = current_db_path
         self.setWindowTitle("Config wechseln")
         self.setMinimumSize(520, 560)
         self._build_ui(current_db_path)
@@ -590,13 +596,7 @@ class ConfigDialog(QDialog):
         layout.addWidget(field_label("Bestehende Configs"))
         self.list_configs = QListWidget()
         for config in self.configs:
-            mode = "KI-Bilder" if config.mode == MODE_AI else "Normal"
-            if config.volume_uuid:
-                state = "verbunden" if locate(config).available else "nicht verbunden"
-                location = f"{config.volume_label or 'Stick'} · {state}"
-            else:
-                location = config.folder or "kein Ordner"
-            item = QListWidgetItem(f"{config.name} · {mode} · {location}")
+            item = QListWidgetItem(self._item_text(config))
             item.setData(Qt.ItemDataRole.UserRole, config.db_path)
             self.list_configs.addItem(item)
             if config.db_path == current_db_path:
@@ -604,8 +604,14 @@ class ConfigDialog(QDialog):
         self.list_configs.itemDoubleClicked.connect(lambda _item: self._open_selected())
         layout.addWidget(self.list_configs, 1)
 
-        btn_open = button("Ausgewählte Config öffnen", "secondary", self._open_selected)
-        layout.addWidget(btn_open)
+        list_buttons = QHBoxLayout()
+        list_buttons.setSpacing(8)
+        list_buttons.addWidget(
+            button("Ausgewählte Config öffnen", "secondary", self._open_selected), 1
+        )
+        list_buttons.addWidget(button("Bearbeiten…", "secondary", self._edit_selected))
+        list_buttons.addWidget(button("Löschen", "danger", self._delete_selected))
+        layout.addLayout(list_buttons)
 
         layout.addWidget(field_label("Neu erstellen"))
         self.inp_name = QLineEdit()
@@ -662,18 +668,74 @@ class ConfigDialog(QDialog):
         self.wants_stick_setup = True
         self.accept()
 
-    def _open_selected(self) -> None:
-        """Select the highlighted config, store it as the last used one and close."""
+    @staticmethod
+    def _item_text(config: VaultConfig) -> str:
+        """Return the list line: name, mode and location of a config."""
+        mode = "KI-Bilder" if config.mode == MODE_AI else "Normal"
+        if config.volume_uuid:
+            state = "verbunden" if locate(config).available else "nicht verbunden"
+            location = f"{config.volume_label or 'Stick'} · {state}"
+        else:
+            location = config.folder or "kein Ordner"
+        return f"{config.name} · {mode} · {location}"
+
+    def _selected(self) -> VaultConfig | None:
+        """Return the highlighted config, warning the user when none is selected."""
         item = self.list_configs.currentItem()
         if item is None:
             QMessageBox.warning(self, "Hinweis", "Bitte eine Config auswählen.")
-            return
+            return None
         db_path = item.data(Qt.ItemDataRole.UserRole)
-        self.selected_config = next(
-            config for config in self.configs if config.db_path == db_path
-        )
-        save_configs(self.configs, db_path)
+        return next(config for config in self.configs if config.db_path == db_path)
+
+    def _open_selected(self) -> None:
+        """Select the highlighted config, store it as the last used one and close."""
+        config = self._selected()
+        if config is None:
+            return
+        self.selected_config = config
+        save_configs(self.configs, config.db_path)
         self.accept()
+
+    def _edit_selected(self) -> None:
+        """Edit name, mode and folder of the highlighted config and save at once."""
+        config = self._selected()
+        if config is None or not EditConfigDialog(self, config, self.configs).exec():
+            return
+        save_configs(self.configs, self._current_db_path)
+        self.list_configs.currentItem().setText(self._item_text(config))
+        self.changed = True
+
+    def _delete_selected(self) -> None:
+        """Remove the highlighted config after confirmation; keep its files.
+
+        The active config cannot be deleted, so the main window always has a
+        library to show. The database file and the media stay on disk.
+        """
+        config = self._selected()
+        if config is None:
+            return
+        if config.db_path == self._current_db_path:
+            QMessageBox.warning(
+                self,
+                "Hinweis",
+                "Die geöffnete Config kann nicht gelöscht werden. "
+                "Öffne zuerst eine andere Config.",
+            )
+            return
+        answer = QMessageBox.question(
+            self,
+            "Config löschen",
+            f"Config „{config.name}“ aus der Liste löschen?\n\n"
+            "Medien und Datenbank bleiben erhalten:\n"
+            f"{config.db_path}",
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        self.configs.remove(config)
+        save_configs(self.configs, self._current_db_path)
+        self.list_configs.takeItem(self.list_configs.currentRow())
+        self.changed = True
 
     def _create(self) -> None:
         """Validate the form, create and save the config and select it.
@@ -684,7 +746,7 @@ class ConfigDialog(QDialog):
         if not name:
             QMessageBox.warning(self, "Fehler", "Name ist erforderlich.")
             return
-        if any(config.name.casefold() == name.casefold() for config in self.configs):
+        if name_in_use(self.configs, name):
             QMessageBox.warning(
                 self, "Fehler", "Eine Config mit diesem Namen existiert bereits."
             )
@@ -700,6 +762,108 @@ class ConfigDialog(QDialog):
         self.configs.append(config)
         save_configs(self.configs, config.db_path)
         self.selected_config = config
+        self.accept()
+
+
+class EditConfigDialog(QDialog):
+    """Edit the name, mode and local folder of one config in place.
+
+    The database path never changes, so ratings and groups stay attached.
+    Stick configs keep their stick binding; their folder is changed through
+    :class:`StickDialog` instead. The caller saves the configs file.
+    """
+
+    def __init__(
+        self, parent: QWidget | None, config: VaultConfig, configs: list[VaultConfig]
+    ) -> None:
+        """Initialize the form with the current values of ``config``.
+
+        Args:
+            parent: Parent window.
+            config: The config to edit; changed only when the dialog is accepted.
+            configs: All configs, used to keep names unique.
+        """
+        super().__init__(parent)
+        self.config = config
+        self.configs = configs
+        self.setWindowTitle("Config bearbeiten")
+        self.setMinimumWidth(480)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(10)
+
+        layout.addWidget(field_label("Name"))
+        self.inp_name = QLineEdit(config.name)
+        layout.addWidget(self.inp_name)
+
+        layout.addWidget(field_label("Modus"))
+        self.combo_mode = QComboBox()
+        self.combo_mode.addItem("Normale Medien", MODE_NORMAL)
+        self.combo_mode.addItem("KI-Bilder", MODE_AI)
+        self.combo_mode.setCurrentIndex(self.combo_mode.findData(config.mode))
+        layout.addWidget(self.combo_mode)
+
+        layout.addWidget(field_label("Ordner"))
+        folder_row = QHBoxLayout()
+        folder_row.setSpacing(8)
+        self.inp_folder = QLineEdit(config.folder)
+        self.inp_folder.setPlaceholderText("Ordner (optional)")
+        btn_folder = button("Ordner wählen…", "secondary", self._choose_folder)
+        folder_row.addWidget(self.inp_folder)
+        folder_row.addWidget(btn_folder)
+        layout.addLayout(folder_row)
+        if config.volume_uuid:
+            self.inp_folder.setText(config.folder_rel)
+            self.inp_folder.setEnabled(False)
+            btn_folder.setEnabled(False)
+            layout.addWidget(
+                hint_label(
+                    "Liegt auf einem Stick; den Ordner über „Vom Stick…“ ändern.",
+                    "MutedLabel",
+                )
+            )
+
+        buttons = QHBoxLayout()
+        buttons.setSpacing(8)
+        buttons.addStretch()
+        buttons.addWidget(button("Abbrechen", "ghost", self.reject))
+        buttons.addWidget(button("Speichern", "primary", self._save))
+        layout.addLayout(buttons)
+
+    def _choose_folder(self) -> None:
+        """Pick a new local media folder."""
+        folder = QFileDialog.getExistingDirectory(
+            self, "Ordner wählen", self.inp_folder.text()
+        )
+        if folder:
+            self.inp_folder.setText(folder)
+
+    def _save(self) -> None:
+        """Validate the form, write the values into the config and close.
+
+        Requires a non-empty name that no other config uses and, for local
+        configs, an existing folder when one is given.
+        """
+        name = self.inp_name.text().strip()
+        if not name:
+            QMessageBox.warning(self, "Fehler", "Name ist erforderlich.")
+            return
+        if name_in_use(self.configs, name, exclude=self.config):
+            QMessageBox.warning(
+                self, "Fehler", "Eine Config mit diesem Namen existiert bereits."
+            )
+            return
+        folder = self.inp_folder.text().strip()
+        if not self.config.volume_uuid:
+            if folder and not os.path.isdir(folder):
+                QMessageBox.warning(self, "Fehler", "Der Ordner existiert nicht.")
+                return
+            if folder != self.config.folder:
+                self.config.folder = folder
+                self.config.folder_last_sync = ""
+        self.config.name = name
+        self.config.mode = self.combo_mode.currentData()
         self.accept()
 
 
